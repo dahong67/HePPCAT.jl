@@ -1,0 +1,7 @@
+name = "HeteroscedasticPCA"
+uuid = "5b0c0c40-6f85-415d-b828-3ce01d5b51ec"
+authors = ["David Hong <dahong67@wharton.upenn.edu> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1.2"
