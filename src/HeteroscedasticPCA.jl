@@ -42,7 +42,8 @@ function ppca(YY,k,iters,init,::Val{:pgd})
     for t in 1:iters
         push!(v, updatev(v[end],SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots)))
         push!(θ2, updateθ2(U[end],v[end],YY,Val(:roots)))
-        L = updateL(Ynorms,θ2[end],v[end])
+        L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2[end]])
+            for (ynorm,σℓ2) in zip(Ynorms,v[end]))
         push!(U, updateU(U[end],θ2[end],v[end],YY,Val(:pgd),L))
     end
     return U, θ2, v
@@ -118,18 +119,12 @@ function updatevi(vi,F::SVD,yi,::Val{:oldflatroots})
 end
 
 # Updates: U
+polar(A) = polar(svd(A))
+polar(A::SVD) = A.U*A.V'
 ∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(Y,v))
 
 updateU(U,θ2,v,Y,::Val{:mm}) = polar(∂h(U,θ2,v,Y))
-
 updateU(U,θ2,v,Y,::Val{:pgd},α) = polar(U + α*∂h(U,θ2,v,Y))
-polar(A::SVD) = A.U*A.V'
-polar(A) = polar(svd(A))
-updateL(ynorms,θ2,σ2) = sum(
-        ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2])
-        for (ynorm,σℓ2) in zip(ynorms,σ2)
-)
-
 function updateU(U,θ2,v,Y,::Val{:sgd},α,β,σ,max_line,t)
     d,k = size(U)
     grad = ∂h(U,θ2,v,Y)
@@ -166,14 +161,7 @@ updateθ2(U,v,Y,method::Val{:roots}) = [updateθ2l(uj,v,Y,method) for uj in each
 function updateθ2l(uj,σ2,Y,::Val{:roots})
     c = [(uj'*yi)^2 for yi in Y]
     p = 1/sum(size.(Y,2)) * ones(length(c))
-    cand = [0.; _fproots(p,c,σ2)]
-    ind = argmin([_f(x,p=p,c=c,σ2=σ2) for x in cand])
-    return cand[ind]
- end
-_f(x;p,c,σ2) = sum(pℓ*(log(x+σℓ2)+cℓ/(x+σℓ2)) for (pℓ,cℓ,σℓ2) in zip(p,c,σ2))
-function _fproots(p,c,σ2)
     L = length(p)
-
     fpnum = sum(
         p[ℓ]*poly([
                 c[ℓ]-σ2[ℓ],
@@ -181,9 +169,12 @@ function _fproots(p,c,σ2)
                 (-σ2[ℓp] for ℓp in 1:L if ℓp != ℓ)...
                 ])
         for ℓ in 1:L)
-
     posroots = filter(x -> real(x) ≈ x && real(x) > 0.0,roots(fpnum))
-    return real.(posroots)
+    cand = [0.; real.(posroots)]
+    ind = argmin(map(cand) do x
+        sum(pℓ*(log(x+σℓ2)+cℓ/(x+σℓ2)) for (pℓ,cℓ,σℓ2) in zip(p,c,σ2))
+    end)
+    return cand[ind]
 end
 
 end
