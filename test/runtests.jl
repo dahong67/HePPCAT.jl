@@ -55,11 +55,12 @@ rng = MersenneTwister(123)
             Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
 
             Yflat = hcat(Y...)
+            Yflatlist = collect(eachcol(Yflat))
 
             F0 = randn(rng, d, k)
 
             @testset "flat" begin
-                Fhat, vhat = HeteroscedasticPCA.ppca(Yflat, k, 10, F0, Val(:mm))
+                Fhat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:mm))
                 Fref, vref = Reference.MM.ppca(Yflat, k, 10, F0)
                 @test Fhat == Fref
                 @test vhat == vref
@@ -80,11 +81,12 @@ rng = MersenneTwister(123)
             Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
 
             Yflat = hcat(Y...)
+            Yflatlist = collect(eachcol(Yflat))
 
             F0 = randn(rng, d, k)
 
             @testset "flat" begin
-                Fhat, vhat = HeteroscedasticPCA.ppca(Yflat, k, 10, F0, Val(:pgd))
+                Fhat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:pgd))
                 Fref, vref = Reference.PGD.ppca(Yflat, k, 10, F0)
                 @test Fhat == Fref
                 @test vhat == vref
@@ -106,11 +108,12 @@ rng = MersenneTwister(123)
             Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
 
             Yflat = hcat(Y...)
+            Yflatlist = collect(eachcol(Yflat))
 
             F0 = randn(rng, d, k)
 
             @testset "flat" begin
-                Fhat, vhat = HeteroscedasticPCA.ppca(Yflat, k, 10, F0, Val(:sgd))
+                Fhat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:sgd))
                 Fref, vref = Reference.SGD.ppca(Yflat, k, 10, F0)
                 @test Fhat == Fref
                 @test vhat == vref

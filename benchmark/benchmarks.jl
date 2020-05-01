@@ -30,7 +30,7 @@ for d = 50:25:100, k = 1:2:3, L = 1:2
     F, Z = randn(rng, d, k), [randn(rng, k, nl) for nl in n]
     Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
 
-    Yflat = hcat(Y...)
+    Yflat = collect.(eachcol(hcat(Y...)))
     F0 = randn(rng, d, k)
 
     for T = 0:10:10
@@ -47,7 +47,7 @@ for d = 50:25:100, k = 1:2:3, L = 1:2
     F, Z = randn(rng, d, k), [randn(rng, k, nl) for nl in n]
     Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
 
-    Yflat = hcat(Y...)
+    Yflat = collect.(eachcol(hcat(Y...)))
     F0 = randn(rng, d, k)
 
     for T = 0:10:10
@@ -64,7 +64,7 @@ for d = 50:25:100, k = 1:2:3, L = 1:2
     F, Z = randn(rng, d, k), [randn(rng, k, nl) for nl in n]
     Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
 
-    Yflat = hcat(Y...)
+    Yflat = collect.(eachcol(hcat(Y...)))
     F0 = randn(rng, d, k)
 
     for T = 0:10:10
