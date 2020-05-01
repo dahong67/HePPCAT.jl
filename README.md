@@ -15,3 +15,4 @@
 + [ ] Simplify/unify tests and benchmarks
 + [ ] Add docs
 + [ ] Improve speed (#ebaa839 to #51326d4 had significant regressions for flat variant)
++ [ ] Check correctness (in particular `θ` vs `θ2`)

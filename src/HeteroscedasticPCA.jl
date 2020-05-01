@@ -14,50 +14,77 @@ using LinearAlgebra
 
 using Logging
 
+# Types
+struct HPPCA{T<:AbstractFloat}
+    U::Matrix{T}
+    θ::Vector{T}
+    v::Vector{T}
+    function HPPCA{T}(U,θ,v) where {T<:AbstractFloat}
+        size(U,2) == length(θ) || throw(DimensionMismatch("U has dimensions $(size(U)) but θ has length $(length(θ))"))
+        new{T}(U,θ,v)
+    end
+end
+HPPCA(U::Matrix{T},θ::Vector{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA{T}(U,θ,v)
+function HPPCA(F::Matrix{T},v::Vector{T}) where {T<:AbstractFloat}
+    U,θ,_ = svd(F)
+    return HPPCA(U,θ,v)
+end
+
 # PPCA
 function ppca(Y,k,iters,init,::Val{:sage})
-    v, F = [zeros(length(Y))], [svd(init)]
+    M = HPPCA(init,zeros(length(Y)))
+    MM = [deepcopy(M)]
+    _Vt = svd(init).Vt
+    _VVt = [_Vt]
     for t = 1:iters
-        push!(v, updatev(v[end],F[end],Y,Val(:roots)))
-        push!(F, svd(updateF(F[end],v[end],Y,Val(:em))))
+        M.v .= updatev(M.v,SVD(M.U,M.θ,_Vt),Y,Val(:roots))
+        F = svd(updateF(SVD(M.U,M.θ,_Vt),M.v,Y,Val(:em)))
+        M.U .= F.U
+        M.θ .= F.S
+        _Vt = F.Vt
+        push!(MM, deepcopy(M))
+        push!(_VVt,copy(_Vt))
     end
-    return F, v
+    return [SVD(M.U,M.θ,_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
 end
 function ppca(YY,k,iters,init,::Val{:mm})
     IVt = Matrix{eltype(init)}(I,k,k)
-    Q, S, _ = svd(init)
-    v, U, θ2 = [zeros(length(YY))], [Q], [S]
+    M = HPPCA(init,zeros(length(YY)))
+    MM = [deepcopy(M)]
     for t = 1:iters
-        push!(v, updatev(v[end],SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots)))
-        push!(θ2, updateθ2(U[end],v[end],YY,Val(:roots)))
-        push!(U, updateU(U[end],θ2[end],v[end],YY,Val(:mm)))
+        M.v .= updatev(M.v,SVD(M.U,sqrt.(M.θ),IVt),YY,Val(:oldflatroots))
+        M.θ .= updateθ2(M.U,M.v,YY,Val(:roots))
+        M.U .= updateU(M.U,M.θ,M.v,YY,Val(:mm))
+        push!(MM,deepcopy(M))
     end
-    return U, θ2, v
+    return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
 function ppca(YY,k,iters,init,::Val{:pgd})
-    IVt = Matrix{eltype(init)}(I,k,k)
-    Q, S, _ = svd(init)
-    v, U, θ2 = [zeros(length(YY))], [Q], [S]
     Ynorms = vec(mapslices(norm,hcat(YY...),dims=1))
-    for t in 1:iters
-        push!(v, updatev(v[end],SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots)))
-        push!(θ2, updateθ2(U[end],v[end],YY,Val(:roots)))
-        L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2[end]])
-            for (ynorm,σℓ2) in zip(Ynorms,v[end]))
-        push!(U, updateU(U[end],θ2[end],v[end],YY,Val(:pgd),L))
+    IVt = Matrix{eltype(init)}(I,k,k)
+    M = HPPCA(init,zeros(length(YY)))
+    MM = [deepcopy(M)]
+    for t = 1:iters
+        M.v .= updatev(M.v,SVD(M.U,sqrt.(M.θ),IVt),YY,Val(:oldflatroots))
+        M.θ .= updateθ2(M.U,M.v,YY,Val(:roots))
+        L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in M.θ])
+            for (ynorm,σℓ2) in zip(Ynorms,M.v))
+        M.U .= updateU(M.U,M.θ,M.v,YY,Val(:pgd),L)
+        push!(MM,deepcopy(M))
     end
-    return U, θ2, v
+    return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
 function ppca(YY,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1)
     IVt = Matrix{eltype(init)}(I,k,k)
-    Q, S, _ = svd(init)
-    v, U, θ2 = [zeros(length(YY))], [Q], [S]
-    for t in 1:iters
-        push!(v, updatev(v[end],SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots)))
-        push!(θ2, updateθ2(U[end],v[end],YY,Val(:roots)))
-        push!(U, updateU(U[end],θ2[end],v[end],YY,Val(:sgd),α,β,σ,max_line,t))
+    M = HPPCA(init,zeros(length(YY)))
+    MM = [deepcopy(M)]
+    for t = 1:iters
+        M.v .= updatev(M.v,SVD(M.U,sqrt.(M.θ),IVt),YY,Val(:oldflatroots))
+        M.θ .= updateθ2(M.U,M.v,YY,Val(:roots))
+        M.U .= updateU(M.U,M.θ,M.v,YY,Val(:sgd),α,β,σ,max_line,t)
+        push!(MM,deepcopy(M))
     end
-    return U, θ2, v
+    return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
 
 # Updates: F
