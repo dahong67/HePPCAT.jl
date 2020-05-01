@@ -16,79 +16,47 @@ using Logging
 
 # PPCA
 function ppca(Y,k,iters,init,::Val{:sage})
-    F = Vector{typeof(init)}(undef,iters+1)
-    v = Vector{Vector{eltype(init)}}(undef,iters+1)
-    F[1] = copy(init)
-    for t in 1:iters
-        _Ft = svd(F[t])
-        vprev = t > 1 ? v[t-1] : zeros(length(Y))  # hack for now until we properly handle init v
-        v[t] = updatev(vprev,_Ft,Y,Val(:roots))
-        F[t+1] = updateF(_Ft,v[t],Y,Val(:em))
+    v, F = [zeros(length(Y))], [svd(init)]
+    for t = 1:iters
+        push!(v, updatev(v[end],F[end],Y,Val(:roots)))
+        push!(F, svd(updateF(F[end],v[end],Y,Val(:em))))
     end
-    vprev = iters > 0 ? v[iters] : zeros(length(Y))  # hack for now until we properly handle init v
-    v[end] = updatev(vprev,F[end],Y,Val(:roots))
-
     return F, v
 end
 function ppca(YY,k,iters,init,::Val{:mm})
     IVt = Matrix{eltype(init)}(I,k,k)
-    U = Vector{typeof(init)}(undef,iters+1)
-    θ2 = Vector{Vector{eltype(init)}}(undef,iters+1)
-    v = Vector{Vector{eltype(init)}}(undef,iters+1)
-    Q,S,_ = svd(init)
-    U[1] = Q[:,1:k]
-    θ2[1] = S[1:k]
-    for t in 1:iters
-        vprev = t > 1 ? v[t-1] : zeros(length(YY))  # hack for now until we properly handle init v
-        v[t] = updatev(vprev,SVD(U[t],sqrt.(θ2[t]),IVt),YY,Val(:oldflatroots))
-        θ2[t+1] = updateθ2(U[t],v[t],YY,Val(:roots))
-        U[t+1] = updateU(U[t],θ2[t+1],v[t],YY,Val(:mm))
+    Q, S, _ = svd(init)
+    v, U, θ2 = [zeros(length(YY))], [Q], [S]
+    for t = 1:iters
+        push!(v, updatev(v[end],SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots)))
+        push!(θ2, updateθ2(U[end],v[end],YY,Val(:roots)))
+        push!(U, updateU(U[end],θ2[end],v[end],YY,Val(:mm)))
     end
-    vprev = iters > 0 ? v[iters] : zeros(length(YY))  # hack for now until we properly handle init v
-    v[end] = updatev(vprev,SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots))
-    Fhat = U[end] * Diagonal(sqrt.(θ2[end]))
-    return Fhat, v
+    return U, θ2, v
 end
 function ppca(YY,k,iters,init,::Val{:pgd})
     IVt = Matrix{eltype(init)}(I,k,k)
-    U = Vector{typeof(init)}(undef,iters+1)
-    θ2 = Vector{Vector{eltype(init)}}(undef,iters+1)
-    v = Vector{Vector{eltype(init)}}(undef,iters+1)
-    Q,S,_ = svd(init)
-    U[1] = Q[:,1:k]
-    θ2[1] = S[1:k]
+    Q, S, _ = svd(init)
+    v, U, θ2 = [zeros(length(YY))], [Q], [S]
     Ynorms = vec(mapslices(norm,hcat(YY...),dims=1))
     for t in 1:iters
-        vprev = t > 1 ? v[t-1] : zeros(length(YY))  # hack for now until we properly handle init v
-        v[t] = updatev(vprev,SVD(U[t],sqrt.(θ2[t]),IVt),YY,Val(:oldflatroots))
-        θ2[t+1] = updateθ2(U[t],v[t],YY,Val(:roots))
-        L = updateL(Ynorms,θ2[t+1],v[t])
-        U[t+1] = updateU(U[t],θ2[t+1],v[t],YY,Val(:pgd),L)
+        push!(v, updatev(v[end],SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots)))
+        push!(θ2, updateθ2(U[end],v[end],YY,Val(:roots)))
+        L = updateL(Ynorms,θ2[end],v[end])
+        push!(U, updateU(U[end],θ2[end],v[end],YY,Val(:pgd),L))
     end
-    vprev = iters > 0 ? v[iters] : zeros(length(YY))  # hack for now until we properly handle init v
-    v[end] = updatev(vprev,SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots))
-    Fhat = U[end] * Diagonal(sqrt.(θ2[end]))
-    return Fhat, v
+    return U, θ2, v
 end
 function ppca(YY,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1)
     IVt = Matrix{eltype(init)}(I,k,k)
-    U = Vector{typeof(init)}(undef,iters+1)
-    θ2 = Vector{Vector{eltype(init)}}(undef,iters+1)
-    v = Vector{Vector{eltype(init)}}(undef,iters+1)
-    Q,S,_ = svd(init)
-    U[1] = Q[:,1:k]
-    θ2[1] = S[1:k]
-
+    Q, S, _ = svd(init)
+    v, U, θ2 = [zeros(length(YY))], [Q], [S]
     for t in 1:iters
-        vprev = t > 1 ? v[t-1] : zeros(length(YY))  # hack for now until we properly handle init v
-        v[t] = updatev(vprev,SVD(U[t],sqrt.(θ2[t]),IVt),YY,Val(:oldflatroots))
-        θ2[t+1] = updateθ2(U[t],v[t],YY,Val(:roots))
-        U[t+1] = updateU(U[t],θ2[t+1],v[t],YY,Val(:sgd),α,β,σ,max_line,t)
+        push!(v, updatev(v[end],SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots)))
+        push!(θ2, updateθ2(U[end],v[end],YY,Val(:roots)))
+        push!(U, updateU(U[end],θ2[end],v[end],YY,Val(:sgd),α,β,σ,max_line,t))
     end
-    vprev = iters > 0 ? v[iters] : zeros(length(YY))  # hack for now until we properly handle init v
-    v[end] = updatev(vprev,SVD(U[end],sqrt.(θ2[end]),IVt),YY,Val(:oldflatroots))
-    Fhat = U[end] * Diagonal(sqrt.(θ2[end]))
-    return Fhat, v
+    return U, θ2, v
 end
 
 # Updates: F
