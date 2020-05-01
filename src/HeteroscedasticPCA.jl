@@ -12,6 +12,8 @@ using .Utils: posroots
 using Polynomials: roots
 using LinearAlgebra
 
+using Logging
+
 # PPCA
 function ppca(Y,k,iters,init,::Val{:sage})
     F = Vector{typeof(init)}(undef,iters+1)
@@ -55,7 +57,7 @@ function ppca(YY,k,iters,init,::Val{:pgd})
     Q,S,_ = svd(init)
     U[1] = Q[:,1:k]
     θ2[1] = S[1:k]
-    Ynorms = computeYcolnorms(hcat(YY...))
+    Ynorms = vec(mapslices(norm,hcat(YY...),dims=1))
     for t in 1:iters
         vprev = t > 1 ? v[t-1] : zeros(length(YY))  # hack for now until we properly handle init v
         v[t] = updatev(vprev,SVD(U[t],sqrt.(θ2[t]),IVt),YY,Val(:oldflatroots))
@@ -148,21 +150,17 @@ function updatevi(vi,F::SVD,yi,::Val{:oldflatroots})
 end
 
 # Updates: U
+∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(Y,v))
+
 updateU(U,θ2,v,Y,::Val{:mm}) = polar(∂h(U,θ2,v,Y))
 
 updateU(U,θ2,v,Y,::Val{:pgd},α) = polar(U + α*∂h(U,θ2,v,Y))
-function polar(A)
-    U,_,V = svd(A)
-    return U*V'
-end
-∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(Y,v))
+polar(A::SVD) = A.U*A.V'
+polar(A) = polar(svd(A))
 updateL(ynorms,θ2,σ2) = sum(
         ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2])
         for (ynorm,σℓ2) in zip(ynorms,σ2)
 )
-function computeYcolnorms(Y)
-    return [norm(Y[:,i]) for i=1:size(Y,2)]
-end
 
 function updateU(U,θ2,v,Y,::Val{:sgd},α,β,σ,max_line,t)
     d,k = size(U)
@@ -177,7 +175,7 @@ function updateU(U,θ2,v,Y,::Val{:sgd},α,β,σ,max_line,t)
         η=β*η
         iter = iter + 1
         if(iter > max_line)
-            println("Iter $t Exceeded maximum line search iterations. Accuracy not guaranteed.")
+            @warn "Iter $t Exceeded maximum line search iterations. Accuracy not guaranteed."
             break
         end
     end
@@ -197,16 +195,14 @@ end
 
 # Updates: θ
 updateθ2(U,v,Y,method::Val{:roots}) = [updateθ2l(uj,v,Y,method) for uj in eachcol(U)]
-function updateθ2l(uj,v,Y,::Val{:roots})
+function updateθ2l(uj,σ2,Y,::Val{:roots})
     c = [(uj'*yi)^2 for yi in Y]
-     _fmin(1/sum(size.(Y,2)) * ones(length(c)),c,v)
- end
-_f(x;p,c,σ2) = sum(pℓ*(log(x+σℓ2)+cℓ/(x+σℓ2)) for (pℓ,cℓ,σℓ2) in zip(p,c,σ2))
-function _fmin(p,c,σ2)
+    p = 1/sum(size.(Y,2)) * ones(length(c))
     cand = [0.; _fproots(p,c,σ2)]
     ind = argmin([_f(x,p=p,c=c,σ2=σ2) for x in cand])
     return cand[ind]
-end
+ end
+_f(x;p,c,σ2) = sum(pℓ*(log(x+σℓ2)+cℓ/(x+σℓ2)) for (pℓ,cℓ,σℓ2) in zip(p,c,σ2))
 function _fproots(p,c,σ2)
     L = length(p)
 

@@ -9,6 +9,7 @@ include("ref/alg,sgd.jl")
 end
 
 using Random, LinearAlgebra, BlockArrays
+using Logging
 
 rng = MersenneTwister(123)
 @testset "alg,sage.jl" begin
@@ -113,7 +114,9 @@ rng = MersenneTwister(123)
             F0 = randn(rng, d, k)
 
             @testset "flat" begin
-                Fhat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:sgd))
+                Fhat, vhat = with_logger(NullLogger()) do
+                    HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:sgd))
+                end
                 Fref, vref = Reference.SGD.ppca(Yflat, k, 10, F0)
                 @test Fhat == Fref
                 @test vhat == vref

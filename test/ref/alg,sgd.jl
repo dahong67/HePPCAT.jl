@@ -57,7 +57,7 @@ function updateU(U,θ2,v,Y,α,β,σ,max_line,t)
         η=β*η
         iter = iter + 1
         if(iter > max_line)
-            println("Iter $t Exceeded maximum line search iterations. Accuracy not guaranteed.")
+            # println("Iter $t Exceeded maximum line search iterations. Accuracy not guaranteed.")
             break
         end
     end
