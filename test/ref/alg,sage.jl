@@ -10,6 +10,7 @@ include("polyratio.jl")
 include("utils.jl")
 
 using BlockArrays: AbstractBlockArray, eachblock
+using BlockArrays: BlockArray
 using LinearAlgebra: svd, SVD, Diagonal, /, norm
 
 using Polynomials: Poly, poly
@@ -33,6 +34,7 @@ end
 
 # Updates
 updateF(F,v,Y) = updateF(svd(F),v,Y)
+updateF(F::SVD,v,Y::BlockArray) = updateF(F,v,Matrix(Y))
 function updateF(F::SVD,v,Y)  # todo: use memory more carefully
     U, θ, V = F
 
@@ -66,6 +68,8 @@ end
 
 updatev(F::SVD,Y::AbstractBlockArray) =
     vcat([fill(_updatevl(F,Yl),size(Yl,2)) for Yl in eachblock(Y)]...)
+updatev(F::SVD,Y::BlockArray) =
+    vcat([fill(_updatevl(F,Yl),size(Yl,2)) for Yl in Y.blocks]...)
 function _updatevl(F::SVD,Yl,tol=1e-14)
     U, θ, _ = F
     d, k = size(F)

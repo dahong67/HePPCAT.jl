@@ -1,34 +1,36 @@
 module HeteroscedasticPCA
 
-# Old SAGE code
 include("../test/ref/polyratio.jl")
 include("../test/ref/utils.jl")
 
-using BlockArrays: AbstractBlockArray, eachblock
 using LinearAlgebra: svd, SVD, Diagonal, /, norm
 
 using Polynomials: Poly, poly
 using .PolynomialRatios
 using .Utils: posroots
 
-# Algorithm
-function ppca(Y,k,iters,init)
+# PPCA
+function ppca(Y,k,iters,init,::Val{:sage})
     F = Vector{typeof(init)}(undef,iters+1)
     v = Vector{Vector{eltype(init)}}(undef,iters+1)
     F[1] = copy(init)
     for t in 1:iters
         _Ft = svd(F[t])
-        v[t] = updatev(_Ft,Y)
-        F[t+1] = updateF(_Ft,v[t],Y)
+        vprev = t > 1 ? v[t-1] : zeros(length(Y))  # hack for now until we properly handle init v
+        v[t] = updatev(vprev,_Ft,Y,Val(:roots))
+        F[t+1] = updateF(_Ft,v[t],Y,Val(:em))
     end
-    v[end] = updatev(F[end],Y)
+    vprev = iters > 0 ? v[iters] : zeros(length(Y))  # hack for now until we properly handle init v
+    v[end] = updatev(vprev,F[end],Y,Val(:roots))
 
     return F, v
 end
 
-# Updates
-updateF(F,v,Y) = updateF(svd(F),v,Y)
-function updateF(F::SVD,v,Y)  # todo: use memory more carefully
+# Updates: F
+updateF(F,v,Y,method::Val{:em}) = updateF(svd(F),v,Y,method)
+function updateF(F::SVD,vv,YY,::Val{:em})  # todo: use memory more carefully
+    n = size.(YY,2)
+    v, Y = vcat(fill.(vv,n)...), hcat(YY...)
     U, θ, V = F
 
     θ2 = θ.^2
@@ -41,27 +43,10 @@ function updateF(F::SVD,v,Y)  # todo: use memory more carefully
     return ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * V'
 end
 
-updatev(F,Y) = updatev(svd(F),Y)
-updatev(F::SVD,Y) = [_updatevi(F,yi) for yi in eachcol(Y)]
-function _updatevi(F::SVD,yi,tol=1e-14)
-    U, θ, _ = F
-    d, k = size(F)
-
-    Uyi = U'yi
-    Li  = v -> (-(d-k)*log(v) - norm(yi-U*Uyi)^2/v
-        - sum(log(θ[j]^2+v) + abs2(Uyi[j])/(θ[j]^2+v) for j in 1:k))
-    Lip = (Poly([norm(yi-U*Uyi)^2,-(d-k)]) // poly(zeros(2))
-        - sum(Poly([θ[j]^2-abs2(Uyi[j]),1.]) // poly(fill(-θ[j]^2,2)) for j in 1:k))
-
-    criticalpoints = posroots(numerator(Lip), tol)
-    optpoint = argmax(Li.(criticalpoints))
-
-    return criticalpoints[optpoint]
-end
-
-updatev(F::SVD,Y::AbstractBlockArray) =
-    vcat([fill(_updatevl(F,Yl),size(Yl,2)) for Yl in eachblock(Y)]...)
-function _updatevl(F::SVD,Yl,tol=1e-14)
+# Updates: v
+updatev(v,F,Y,method::Val{:roots}) = updatev(v,svd(F),Y,method)
+updatev(v,F::SVD,Y,method::Val{:roots}) = [updatevl(vl,F,Yl,method) for (vl,Yl) in zip(v,Y)]
+function updatevl(vl,F::SVD,Yl,::Val{:roots},tol=1e-14)
     U, θ, _ = F
     d, k = size(F)
     nl = size(Yl,2)

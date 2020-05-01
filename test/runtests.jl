@@ -20,17 +20,19 @@ rng = MersenneTwister(123)
             Yflat = hcat(Y...)
             Yblock = BlockArray(Yflat, [d], collect(n))
 
+            Yflatlist = collect(eachcol(Yflat))
+
             F0 = randn(rng, d, k)
 
             @testset "block" begin
-                Fhat, vhat = HeteroscedasticPCA.ppca(Yblock, k, 10, F0)
+                Fhat, vhat = HeteroscedasticPCA.ppca(Y, k, 10, F0, Val(:sage))
                 Fref, vref = Reference.SAGE.ppca(Yblock, k, 10, F0)
                 @test Fhat == Fref
-                @test vhat == vref
+                @test [vcat(fill.(_vt,n)...) for _vt in vhat] == vref
             end
 
             @testset "flat" begin
-                Fhat, vhat = HeteroscedasticPCA.ppca(Yflat, k, 10, F0)
+                Fhat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:sage))
                 Fref, vref = Reference.SAGE.ppca(Yflat, k, 10, F0)
                 @test Fhat == Fref
                 @test vhat == vref
