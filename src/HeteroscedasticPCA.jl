@@ -30,6 +30,19 @@ function HPPCA(F::Matrix{T},v::Vector{T}) where {T<:AbstractFloat}
     return HPPCA(U,θ,v)
 end
 
+struct RootFinding end
+struct ExpectationMaximization end
+struct MinorizeMaximize end
+struct ProjectedGradientAscent{T<:AbstractFloat}
+    stepsize::T
+end
+struct StiefelGradientAscent{S<:Integer,T<:AbstractFloat}
+    maxsearches::S  # maximum number of line searches
+    stepsize::T     # initial stepsize
+    contraction::T  # contraction factor
+    tol::T          # tolerance for sufficient decrease
+end
+
 # PPCA
 function ppca(Y,k,iters,init,::Val{:sage})
     M = HPPCA(init,zeros(length(Y)))
@@ -37,8 +50,8 @@ function ppca(Y,k,iters,init,::Val{:sage})
     _Vt = svd(init).Vt
     _VVt = [_Vt]
     for t = 1:iters
-        updatev!(M,Y,Val(:roots))
-        _Vt = updateF!(M,Y,Val(:em),_Vt)
+        updatev!(M,Y,RootFinding())
+        _Vt = updateF!(M,Y,ExpectationMaximization(),_Vt)
         push!(MM, deepcopy(M))
         push!(_VVt,copy(_Vt))
     end
@@ -49,8 +62,8 @@ function ppca(Y,k,iters,init,::Val{:mm})
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
-        updateθ2!(M,Y,Val(:roots))
-        updateU!(M,Y,Val(:mm))
+        updateθ2!(M,Y,RootFinding())
+        updateU!(M,Y,MinorizeMaximize())
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
@@ -61,28 +74,28 @@ function ppca(Y,k,iters,init,::Val{:pgd})
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
-        updateθ2!(M,Y,Val(:roots))
+        updateθ2!(M,Y,RootFinding())
         L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in M.θ])
             for (ynorm,σℓ2) in zip(Ynorms,M.v))
-        updateU!(M,Y,Val(:pgd),L)
+        updateU!(M,Y,ProjectedGradientAscent(L))
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
-function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1)
+function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
     M = HPPCA(init,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
-        updateθ2!(M,Y,Val(:roots))
-        updateU!(M,Y,Val(:sgd),α,β,σ,max_line,t)
+        updateθ2!(M,Y,RootFinding())
+        updateU!(M,Y,StiefelGradientAscent(max_line,α,β,σ))
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
 
 # Updates: F
-function updateF!(M::HPPCA,YY,::Val{:em},Vt)
+function updateF!(M::HPPCA,YY,::ExpectationMaximization,Vt)
     U, θ, vv = M.U, M.θ, M.v
     n = size.(YY,2)
     v, Y = vcat(fill.(vv,n)...), hcat(YY...)
@@ -106,7 +119,7 @@ function updatev!(M::HPPCA,Y,method)
         M.v[l] = updatevl(M.v[l],M.U,M.θ,Yl,method)
     end
 end
-function updatevl(vl,U,θ,Yl,::Val{:roots},tol=1e-14)
+function updatevl(vl,U,θ,Yl,::RootFinding,tol=1e-14)
     d, k = size(U)
     nl = size(Yl,2)
 
@@ -146,9 +159,10 @@ polar(A) = polar(svd(A))
 polar(A::SVD) = A.U*A.V'
 ∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(Y,v))
 
-updateU!(M::HPPCA,Y,::Val{:mm}) = (M.U .= polar(∂h(M.U,M.θ,M.v,Y)))
-updateU!(M::HPPCA,Y,::Val{:pgd},α) = (M.U .= polar(M.U + α*∂h(M.U,M.θ,M.v,Y)))
-function updateU!(M::HPPCA,Y,::Val{:sgd},α,β,σ,max_line,t)
+updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(∂h(M.U,M.θ,M.v,Y)))
+updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent) = (M.U .= polar(M.U + pga.stepsize*∂h(M.U,M.θ,M.v,Y)))
+function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
+    α,β,σ,max_line = sga.stepsize, sga.contraction, sga.tol, sga.maxsearches
     U, θ2, v = M.U, M.θ, M.v
     d,k = size(U)
     grad = ∂h(U,θ2,v,Y)
@@ -162,7 +176,7 @@ function updateU!(M::HPPCA,Y,::Val{:sgd},α,β,σ,max_line,t)
         η=β*η
         iter = iter + 1
         if(iter > max_line)
-            @warn "Iter $t Exceeded maximum line search iterations. Accuracy not guaranteed."
+            @warn "Exceeded maximum line search iterations. Accuracy not guaranteed."
             break
         end
     end
@@ -186,7 +200,7 @@ function updateθ2!(M::HPPCA,Y,method)
         M.θ[j] = updateθ2j(M.θ[j],uj,M.v,Y,method)
     end
 end
-function updateθ2j(θj,uj,σ2,Y,::Val{:roots})
+function updateθ2j(θj,uj,σ2,Y,::RootFinding)
     c = [(uj'*yi)^2 for yi in Y]
     p = 1/sum(size.(Y,2)) * ones(length(c))
     L = length(p)
