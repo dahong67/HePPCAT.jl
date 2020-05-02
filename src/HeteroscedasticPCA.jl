@@ -15,17 +15,6 @@ using LinearAlgebra
 using Logging
 
 # Types
-struct HPPCA1{T<:AbstractFloat}
-    U::Matrix{T}
-    θ::Vector{T}
-    v::Vector{T}
-    function HPPCA1{T}(U,θ,v) where {T<:AbstractFloat}
-        size(U,2) == length(θ) || throw(DimensionMismatch("U has dimensions $(size(U)) but θ has length $(length(θ))"))
-        new{T}(U,θ,v)
-    end
-end
-HPPCA1(U::Matrix{T},θ::Vector{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA1{T}(U,θ,v)
-
 struct HPPCA2{T<:AbstractFloat}
     U::Matrix{T}
     θ2::Vector{T}
@@ -52,7 +41,7 @@ end
 
 # PPCA
 function ppca(Y,k,iters,init,::Val{:sage})
-    M = HPPCA1(svd(init).U,svd(init).S,zeros(length(Y)))
+    M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     _Vt = svd(init).Vt
     _VVt = [_Vt]
@@ -62,7 +51,7 @@ function ppca(Y,k,iters,init,::Val{:sage})
         push!(MM, deepcopy(M))
         push!(_VVt,copy(_Vt))
     end
-    return [SVD(M.U,M.θ,_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
+    return [SVD(M.U,sqrt.(M.θ2),_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:mm})
     M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
@@ -102,8 +91,8 @@ function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
 end
 
 # Updates: F
-function updateF!(M::HPPCA1,YY,::ExpectationMaximization,Vt)
-    U, θ, vv = M.U, M.θ, M.v
+function updateF!(M::HPPCA2,YY,::ExpectationMaximization,Vt)
+    U, θ, vv = M.U, sqrt.(M.θ2), M.v
     n = size.(YY,2)
     v, Y = vcat(fill.(vv,n)...), hcat(YY...)
 
@@ -116,17 +105,13 @@ function updateF!(M::HPPCA1,YY,::ExpectationMaximization,Vt)
 
     F = svd( ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * Vt )
     M.U .= F.U
-    M.θ .= F.S
+    M.θ2 .= F.S.^2
     return F.Vt
 end
 
 # Updates: v
-function updatev!(M::HPPCA1,Y,method)
-    for (l,Yl) in enumerate(Y)
-        M.v[l] = updatevl(M.v[l],M.U,M.θ,Yl,method)
-    end
-end
-function updatevl(vl,U,θ,Yl,::RootFinding,tol=1e-14)
+function updatevl(vl,U,θ2,Yl,::RootFinding,tol=1e-14)
+    θ = sqrt.(θ2)
     d, k = size(U)
     nl = size(Yl,2)
 
