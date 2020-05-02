@@ -44,38 +44,38 @@ function ppca(Y,k,iters,init,::Val{:sage})
     end
     return [SVD(M.U,M.θ,_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
 end
-function ppca(YY,k,iters,init,::Val{:mm})
-    M = HPPCA(init,zeros(length(YY)))
+function ppca(Y,k,iters,init,::Val{:mm})
+    M = HPPCA(init,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        updatev!(M,YY,Val(:oldflatroots))
-        updateθ2!(M,YY,Val(:roots))
-        updateU!(M,YY,Val(:mm))
+        updatev!(M,Y,Val(:oldflatroots))
+        updateθ2!(M,Y,Val(:roots))
+        updateU!(M,Y,Val(:mm))
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
-function ppca(YY,k,iters,init,::Val{:pgd})
-    Ynorms = vec(mapslices(norm,hcat(YY...),dims=1))
-    M = HPPCA(init,zeros(length(YY)))
+function ppca(Y,k,iters,init,::Val{:pgd})
+    Ynorms = vec(mapslices(norm,hcat(Y...),dims=1))
+    M = HPPCA(init,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        updatev!(M,YY,Val(:oldflatroots))
-        updateθ2!(M,YY,Val(:roots))
+        updatev!(M,Y,Val(:oldflatroots))
+        updateθ2!(M,Y,Val(:roots))
         L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in M.θ])
             for (ynorm,σℓ2) in zip(Ynorms,M.v))
-        updateU!(M,YY,Val(:pgd),L)
+        updateU!(M,Y,Val(:pgd),L)
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
-function ppca(YY,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1)
-    M = HPPCA(init,zeros(length(YY)))
+function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1)
+    M = HPPCA(init,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        updatev!(M,YY,Val(:oldflatroots))
-        updateθ2!(M,YY,Val(:roots))
-        updateU!(M,YY,Val(:sgd),α,β,σ,max_line,t)
+        updatev!(M,Y,Val(:oldflatroots))
+        updateθ2!(M,Y,Val(:roots))
+        updateU!(M,Y,Val(:sgd),α,β,σ,max_line,t)
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
