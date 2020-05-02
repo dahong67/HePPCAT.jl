@@ -10,7 +10,7 @@
 + [ ] Changes without numerical impact
   + [x] Initial refactor using cleaner and more uniform signatures for updates (and make them mutating)
   + [x] Some initial tests (that test `==` not `≈`) and benchmarks
-  + [ ] Fix inconsistencies related to `θ` vs `θ2`
+  + [x] Fix inconsistencies related to `θ` vs `θ2`
   + [ ] Try to further simplify the implementations but without changing the outputs
 + [ ] Changes with potential numerical impact
   + [ ] Remove old root-finding method `:oldflatroots`

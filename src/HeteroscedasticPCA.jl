@@ -15,16 +15,16 @@ using LinearAlgebra
 using Logging
 
 # Types
-struct HPPCA2{T<:AbstractFloat}
+struct HPPCA{T<:AbstractFloat}
     U::Matrix{T}
-    θ2::Vector{T}
+    λ::Vector{T}
     v::Vector{T}
-    function HPPCA2{T}(U,θ2,v) where {T<:AbstractFloat}
-        size(U,2) == length(θ2) || throw(DimensionMismatch("U has dimensions $(size(U)) but θ2 has length $(length(θ2))"))
-        new{T}(U,θ2,v)
+    function HPPCA{T}(U,λ,v) where {T<:AbstractFloat}
+        size(U,2) == length(λ) || throw(DimensionMismatch("U has dimensions $(size(U)) but λ has length $(length(λ))"))
+        new{T}(U,λ,v)
     end
 end
-HPPCA2(U::Matrix{T},θ2::Vector{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA2{T}(U,θ2,v)
+HPPCA(U::Matrix{T},λ::Vector{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA{T}(U,λ,v)
 
 struct RootFinding end
 struct ExpectationMaximization end
@@ -41,7 +41,7 @@ end
 
 # PPCA
 function ppca(Y,k,iters,init,::Val{:sage})
-    M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     _Vt = svd(init).Vt
     _VVt = [_Vt]
@@ -51,67 +51,67 @@ function ppca(Y,k,iters,init,::Val{:sage})
         push!(MM, deepcopy(M))
         push!(_VVt,copy(_Vt))
     end
-    return [SVD(M.U,sqrt.(M.θ2),_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
+    return [SVD(M.U,sqrt.(M.λ),_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:mm})
-    M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
-        updateθ2!(M,Y,RootFinding())
+        updateλ!(M,Y,RootFinding())
         updateU!(M,Y,MinorizeMaximize())
         push!(MM,deepcopy(M))
     end
-    return getfield.(MM,:U), getfield.(MM,:θ2), getfield.(MM,:v)
+    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:pgd})
     Ynorms = vec(mapslices(norm,hcat(Y...),dims=1))
-    M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
-        updateθ2!(M,Y,RootFinding())
-        L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in M.θ2])   # todo: should ynorm be squared?
-            for (ynorm,σℓ2) in zip(Ynorms,M.v))
+        updateλ!(M,Y,RootFinding())
+        L = sum(ynorm*maximum([λj/vi/(λj+vi) for λj in M.λ])   # todo: should ynorm be squared?
+            for (ynorm,vi) in zip(Ynorms,M.v))
         updateU!(M,Y,ProjectedGradientAscent(L))
         push!(MM,deepcopy(M))
     end
-    return getfield.(MM,:U), getfield.(MM,:θ2), getfield.(MM,:v)
+    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
-    M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
-        updateθ2!(M,Y,RootFinding())
+        updateλ!(M,Y,RootFinding())
         updateU!(M,Y,StiefelGradientAscent(max_line,α,β,σ))
         push!(MM,deepcopy(M))
     end
-    return getfield.(MM,:U), getfield.(MM,:θ2), getfield.(MM,:v)
+    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
 end
 
 # Updates: F
-function updateF!(M::HPPCA2,YY,::ExpectationMaximization,Vt)
-    U, θ, vv = M.U, sqrt.(M.θ2), M.v
+function updateF!(M::HPPCA,YY,::ExpectationMaximization,Vt)
+    U, θ, vv = M.U, sqrt.(M.λ), M.v
     n = size.(YY,2)
     v, Y = vcat(fill.(vv,n)...), hcat(YY...)
 
-    θ2 = θ.^2
+    λ = θ.^2
     ηt = permutedims(sqrt.(v))
     vt = permutedims(v)
 
-    Ztil = θ ./ ηt ./ (θ2 .+ vt) .* (U'*Y)
-    Γsum = Diagonal([sum(1/(θ2j+vi) for vi in v) for θ2j in θ2])
+    Ztil = θ ./ ηt ./ (λ .+ vt) .* (U'*Y)
+    Γsum = Diagonal([sum(1/(λj+vi) for vi in v) for λj in λ])
 
     F = svd( ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * Vt )
     M.U .= F.U
-    M.θ2 .= F.S.^2
+    M.λ .= F.S.^2
     return F.Vt
 end
 
 # Updates: v
-function updatevl(vl,U,θ2,Yl,::RootFinding,tol=1e-14)
-    θ = sqrt.(θ2)
+function updatevl(vl,U,λ,Yl,::RootFinding,tol=1e-14)
+    θ = sqrt.(λ)
     d, k = size(U)
     nl = size(Yl,2)
 
@@ -126,13 +126,13 @@ function updatevl(vl,U,θ2,Yl,::RootFinding,tol=1e-14)
 
     return criticalpoints[optpoint]
 end
-function updatev!(M::HPPCA2,Y,method)
+function updatev!(M::HPPCA,Y,method)
     for (l,Yl) in enumerate(Y)
-        M.v[l] = updatevl(M.v[l],M.U,M.θ2,Yl,method)
+        M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
     end
 end
-function updatevl(vi,U,θ2,yi,::Val{:oldflatroots})  # only really for individual samples, not blocks
-    θ = sqrt.(θ2)
+function updatevl(vi,U,λ,yi,::Val{:oldflatroots})  # only really for individual samples, not blocks
+    θ = sqrt.(λ)
     d, k = size(U)
 
     Uyi = U'yi
@@ -154,22 +154,22 @@ end
 # Updates: U
 polar(A) = polar(svd(A))
 polar(A::SVD) = A.U*A.V'
-∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(Y,v))
+∂h(U,λ,v,Y) = sum(yi * yi' * U * Diagonal([λj/vi/(λj+vi) for λj in λ]) for (yi,vi) in zip(Y,v))
 
-updateU!(M::HPPCA2,Y,::MinorizeMaximize) = (M.U .= polar(∂h(M.U,M.θ2,M.v,Y)))
-updateU!(M::HPPCA2,Y,pga::ProjectedGradientAscent) = (M.U .= polar(M.U + pga.stepsize*∂h(M.U,M.θ2,M.v,Y)))
-function updateU!(M::HPPCA2,Y,sga::StiefelGradientAscent)
+updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(∂h(M.U,M.λ,M.v,Y)))
+updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent) = (M.U .= polar(M.U + pga.stepsize*∂h(M.U,M.λ,M.v,Y)))
+function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
     α,β,σ,max_line = sga.stepsize, sga.contraction, sga.tol, sga.maxsearches
-    U, θ2, v = M.U, M.θ2, M.v
+    U, λ, v = M.U, M.λ, M.v
     d,k = size(U)
-    grad = ∂h(U,θ2,v,Y)
+    grad = ∂h(U,λ,v,Y)
     ∇h = grad - U*(grad'U)
 
-    f_U = _F(U,θ2,v,Y)
+    f_U = _F(U,λ,v,Y)
 
     η=1
     iter = 0
-    while (f_U - _F(R(U,α*∇h,η),θ2,v,Y)) > -σ * tr(∇h'*(η*α*∇h))
+    while (f_U - _F(R(U,α*∇h,η),λ,v,Y)) > -σ * tr(∇h'*(η*α*∇h))
         η=β*η
         iter = iter + 1
         if(iter > max_line)
@@ -179,7 +179,7 @@ function updateU!(M::HPPCA2,Y,sga::StiefelGradientAscent)
     end
     return M.U .= R(U,α*∇h,η)
 end
-_F(U,θ2,σ2,Y) = sum((yi' * U) * Diagonal([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2]) * (U'*yi) for (yi,σℓ2) in zip(Y,σ2))
+_F(U,λ,v,Y) = sum((yi' * U) * Diagonal([λj/vi/(λj+vi) for λj in λ]) * (U'*yi) for (yi,vi) in zip(Y,v))
 function R(U,∇h,η)
     d,k = size(U)
     A = U'∇h
@@ -191,27 +191,27 @@ function R(U,∇h,η)
     return U*M + Q*N
 end
 
-# Updates: θ
-function updateθ2!(M::HPPCA2,Y,method)
+# Updates: λ
+function updateλ!(M::HPPCA,Y,method)
     for (j,uj) in enumerate(eachcol(M.U))
-        M.θ2[j] = updateθ2j(M.θ2[j],uj,M.v,Y,method)
+        M.λ[j] = updateλj(M.λ[j],uj,M.v,Y,method)
     end
 end
-function updateθ2j(θ2j,uj,σ2,Y,::RootFinding)
+function updateλj(λj,uj,v,Y,::RootFinding)
     c = [(uj'*yi)^2 for yi in Y]
     p = 1/sum(size.(Y,2)) * ones(length(c))
     L = length(p)
     fpnum = sum(
-        p[ℓ]*poly([
-                c[ℓ]-σ2[ℓ],
-                (-σ2[ℓp] for ℓp in 1:L if ℓp != ℓ)...,
-                (-σ2[ℓp] for ℓp in 1:L if ℓp != ℓ)...
+        p[l]*poly([
+                c[l]-v[l],
+                (-v[lp] for lp in 1:L if lp != l)...,
+                (-v[lp] for lp in 1:L if lp != l)...
                 ])
-        for ℓ in 1:L)
+        for l in 1:L)
     posroots = filter(x -> real(x) ≈ x && real(x) > 0.0,roots(fpnum))
     cand = [0.; real.(posroots)]
     ind = argmin(map(cand) do x
-        sum(pℓ*(log(x+σℓ2)+cℓ/(x+σℓ2)) for (pℓ,cℓ,σℓ2) in zip(p,c,σ2))
+        sum(pl*(log(x+vl)+cl/(x+vl)) for (pl,cl,vl) in zip(p,c,v))
     end)
     return cand[ind]
 end
