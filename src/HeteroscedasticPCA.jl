@@ -25,10 +25,6 @@ struct HPPCA{T<:AbstractFloat}
     end
 end
 HPPCA(U::Matrix{T},θ::Vector{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA{T}(U,θ,v)
-function HPPCA(F::Matrix{T},v::Vector{T}) where {T<:AbstractFloat}
-    U,θ,_ = svd(F)
-    return HPPCA(U,θ,v)
-end
 
 struct RootFinding end
 struct ExpectationMaximization end
@@ -45,7 +41,7 @@ end
 
 # PPCA
 function ppca(Y,k,iters,init,::Val{:sage})
-    M = HPPCA(init,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S,zeros(length(Y)))
     MM = [deepcopy(M)]
     _Vt = svd(init).Vt
     _VVt = [_Vt]
@@ -58,7 +54,7 @@ function ppca(Y,k,iters,init,::Val{:sage})
     return [SVD(M.U,M.θ,_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:mm})
-    M = HPPCA(init,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
@@ -70,7 +66,7 @@ function ppca(Y,k,iters,init,::Val{:mm})
 end
 function ppca(Y,k,iters,init,::Val{:pgd})
     Ynorms = vec(mapslices(norm,hcat(Y...),dims=1))
-    M = HPPCA(init,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
@@ -83,7 +79,7 @@ function ppca(Y,k,iters,init,::Val{:pgd})
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
-    M = HPPCA(init,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
