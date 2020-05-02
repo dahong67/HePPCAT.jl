@@ -24,3 +24,4 @@
   + [ ] Improve speed (#ebaa839 to #51326d4 had significant regressions for flat variant)
     + Need to profile and understand where/why its slow
     + Maybe add specific implementations for this case
++ [ ] Run through `JuliaFormatter`

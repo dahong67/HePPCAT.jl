@@ -71,7 +71,7 @@ function ppca(Y,k,iters,init,::Val{:pgd})
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
         updateθ2!(M,Y,RootFinding())
-        L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in M.θ])
+        L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in M.θ2])   # todo: should ynorm be squared?
             for (ynorm,σℓ2) in zip(Ynorms,M.v))
         updateU!(M,Y,ProjectedGradientAscent(L))
         push!(MM,deepcopy(M))
