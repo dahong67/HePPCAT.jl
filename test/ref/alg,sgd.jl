@@ -22,7 +22,7 @@ function ppca(Y,k,iters,init,max_line=50,α=0.8,β=0.5,σ=1)
     v = Vector{Vector{eltype(init)}}(undef,iters+1)
     Q,S,_ = svd(init)
     U[1] = Q[:,1:k]
-    θ2[1] = S[1:k]
+    θ2[1] = S[1:k].^2
 
     for t in 1:iters
         v[t] = updatev(U[t],θ2[t],Y)

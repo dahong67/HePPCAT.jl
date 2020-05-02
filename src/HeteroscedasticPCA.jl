@@ -65,7 +65,7 @@ function ppca(Y,k,iters,init,::Val{:sage})
     return [SVD(M.U,M.θ,_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:mm})
-    M = HPPCA2(svd(init).U,svd(init).S,zeros(length(Y))) # todo: svals should be squared
+    M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
@@ -77,7 +77,7 @@ function ppca(Y,k,iters,init,::Val{:mm})
 end
 function ppca(Y,k,iters,init,::Val{:pgd})
     Ynorms = vec(mapslices(norm,hcat(Y...),dims=1))
-    M = HPPCA2(svd(init).U,svd(init).S,zeros(length(Y))) # todo: svals should be squared
+    M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
@@ -90,7 +90,7 @@ function ppca(Y,k,iters,init,::Val{:pgd})
     return getfield.(MM,:U), getfield.(MM,:θ2), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
-    M = HPPCA2(svd(init).U,svd(init).S,zeros(length(Y))) # todo: svals should be squared
+    M = HPPCA2(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,Val(:oldflatroots))
