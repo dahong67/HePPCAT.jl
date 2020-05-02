@@ -6,13 +6,21 @@
 
 ## TODO
 
-+ [ ] Refactor code, use new signatures, etc.
-+ [ ] Add benchmarks
-+ [ ] Try new global maximization ideas for `v` update
-+ [ ] Add mutating versions of updates
-+ [ ] Add tests against simple / easily checkable
-  (but potentially inefficient) reference implementations
-+ [ ] Simplify/unify tests and benchmarks
-+ [ ] Add docs
-+ [ ] Improve speed (#ebaa839 to #51326d4 had significant regressions for flat variant)
-+ [ ] Check correctness (in particular `θ` vs `θ2`)
++ [x] Copy implementations from previous code and get them running
++ [ ] Changes without numerical impact
+  + [x] Initial refactor using cleaner and more uniform signatures for updates (and make them mutating)
+  + [x] Some initial tests (that test `==` not `≈`) and benchmarks
+  + [ ] Fix inconsistencies related to `θ` vs `θ2`
+  + [ ] Try to further simplify the implementations but without changing the outputs
++ [ ] Changes with potential numerical impact
+  + [ ] Remove old root-finding method `:oldflatroots`
+  + [ ] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
+  + [ ] New global maximization ideas for `v` and `θ` updates
++ [ ] Further enhancements
+  + [ ] Add all methods from paper
+  + [ ] Make reference implementations for tests simple / easily checkable
+  + [ ] Simplify/unify tests and benchmarks
+  + [ ] Add docs
+  + [ ] Improve speed (#ebaa839 to #51326d4 had significant regressions for flat variant)
+    + Need to profile and understand where/why its slow
+    + Maybe add specific implementations for this case
