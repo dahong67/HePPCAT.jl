@@ -37,62 +37,55 @@ function ppca(Y,k,iters,init,::Val{:sage})
     _Vt = svd(init).Vt
     _VVt = [_Vt]
     for t = 1:iters
-        M.v .= updatev(M.v,SVD(M.U,M.θ,_Vt),Y,Val(:roots))
-        F = svd(updateF(SVD(M.U,M.θ,_Vt),M.v,Y,Val(:em)))
-        M.U .= F.U
-        M.θ .= F.S
-        _Vt = F.Vt
+        updatev!(M,Y,Val(:roots))
+        _Vt = updateF!(M,Y,Val(:em),_Vt)
         push!(MM, deepcopy(M))
         push!(_VVt,copy(_Vt))
     end
     return [SVD(M.U,M.θ,_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
 end
 function ppca(YY,k,iters,init,::Val{:mm})
-    IVt = Matrix{eltype(init)}(I,k,k)
     M = HPPCA(init,zeros(length(YY)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        M.v .= updatev(M.v,SVD(M.U,sqrt.(M.θ),IVt),YY,Val(:oldflatroots))
-        M.θ .= updateθ2(M.U,M.v,YY,Val(:roots))
-        M.U .= updateU(M.U,M.θ,M.v,YY,Val(:mm))
+        updatev!(M,YY,Val(:oldflatroots))
+        updateθ2!(M,YY,Val(:roots))
+        updateU!(M,YY,Val(:mm))
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
 function ppca(YY,k,iters,init,::Val{:pgd})
     Ynorms = vec(mapslices(norm,hcat(YY...),dims=1))
-    IVt = Matrix{eltype(init)}(I,k,k)
     M = HPPCA(init,zeros(length(YY)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        M.v .= updatev(M.v,SVD(M.U,sqrt.(M.θ),IVt),YY,Val(:oldflatroots))
-        M.θ .= updateθ2(M.U,M.v,YY,Val(:roots))
+        updatev!(M,YY,Val(:oldflatroots))
+        updateθ2!(M,YY,Val(:roots))
         L = sum(ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in M.θ])
             for (ynorm,σℓ2) in zip(Ynorms,M.v))
-        M.U .= updateU(M.U,M.θ,M.v,YY,Val(:pgd),L)
+        updateU!(M,YY,Val(:pgd),L)
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
 function ppca(YY,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1)
-    IVt = Matrix{eltype(init)}(I,k,k)
     M = HPPCA(init,zeros(length(YY)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        M.v .= updatev(M.v,SVD(M.U,sqrt.(M.θ),IVt),YY,Val(:oldflatroots))
-        M.θ .= updateθ2(M.U,M.v,YY,Val(:roots))
-        M.U .= updateU(M.U,M.θ,M.v,YY,Val(:sgd),α,β,σ,max_line,t)
+        updatev!(M,YY,Val(:oldflatroots))
+        updateθ2!(M,YY,Val(:roots))
+        updateU!(M,YY,Val(:sgd),α,β,σ,max_line,t)
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:θ), getfield.(MM,:v)
 end
 
 # Updates: F
-updateF(F,v,Y,method::Val{:em}) = updateF(svd(F),v,Y,method)
-function updateF(F::SVD,vv,YY,::Val{:em})  # todo: use memory more carefully
+function updateF!(M::HPPCA,YY,::Val{:em},Vt)
+    U, θ, vv = M.U, M.θ, M.v
     n = size.(YY,2)
     v, Y = vcat(fill.(vv,n)...), hcat(YY...)
-    U, θ, V = F
 
     θ2 = θ.^2
     ηt = permutedims(sqrt.(v))
@@ -101,15 +94,20 @@ function updateF(F::SVD,vv,YY,::Val{:em})  # todo: use memory more carefully
     Ztil = θ ./ ηt ./ (θ2 .+ vt) .* (U'*Y)
     Γsum = Diagonal([sum(1/(θ2j+vi) for vi in v) for θ2j in θ2])
 
-    return ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * V'
+    F = svd( ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * Vt )
+    M.U .= F.U
+    M.θ .= F.S
+    return F.Vt
 end
 
 # Updates: v
-updatev(v,F,Y,method::Val{:roots}) = updatev(v,svd(F),Y,method)
-updatev(v,F::SVD,Y,method::Val{:roots}) = [updatevl(vl,F,Yl,method) for (vl,Yl) in zip(v,Y)]
-function updatevl(vl,F::SVD,Yl,::Val{:roots},tol=1e-14)
-    U, θ, _ = F
-    d, k = size(F)
+function updatev!(M::HPPCA,Y,method)
+    for (l,Yl) in enumerate(Y)
+        M.v[l] = updatevl(M.v[l],M.U,M.θ,Yl,method)
+    end
+end
+function updatevl(vl,U,θ,Yl,::Val{:roots},tol=1e-14)
+    d, k = size(U)
     nl = size(Yl,2)
 
     UYl = U'Yl
@@ -123,10 +121,8 @@ function updatevl(vl,F::SVD,Yl,::Val{:roots},tol=1e-14)
 
     return criticalpoints[optpoint]
 end
-
-updatev(v,F::SVD,Y,method::Val{:oldflatroots}) = [updatevi(vi,F,yi,method) for (vi,yi) in zip(v,Y)]
-function updatevi(vi,F::SVD,yi,::Val{:oldflatroots})
-    U,θ,_ = F
+function updatevl(vi,U,θ2,yi,::Val{:oldflatroots})  # only really for individual samples, not blocks
+    θ = sqrt.(θ2)
     d, k = size(U)
 
     Uyi = U'yi
@@ -150,9 +146,10 @@ polar(A) = polar(svd(A))
 polar(A::SVD) = A.U*A.V'
 ∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(Y,v))
 
-updateU(U,θ2,v,Y,::Val{:mm}) = polar(∂h(U,θ2,v,Y))
-updateU(U,θ2,v,Y,::Val{:pgd},α) = polar(U + α*∂h(U,θ2,v,Y))
-function updateU(U,θ2,v,Y,::Val{:sgd},α,β,σ,max_line,t)
+updateU!(M::HPPCA,Y,::Val{:mm}) = (M.U .= polar(∂h(M.U,M.θ,M.v,Y)))
+updateU!(M::HPPCA,Y,::Val{:pgd},α) = (M.U .= polar(M.U + α*∂h(M.U,M.θ,M.v,Y)))
+function updateU!(M::HPPCA,Y,::Val{:sgd},α,β,σ,max_line,t)
+    U, θ2, v = M.U, M.θ, M.v
     d,k = size(U)
     grad = ∂h(U,θ2,v,Y)
     ∇h = grad - U*(grad'U)
@@ -169,7 +166,7 @@ function updateU(U,θ2,v,Y,::Val{:sgd},α,β,σ,max_line,t)
             break
         end
     end
-    return R(U,α*∇h,η)
+    return M.U .= R(U,α*∇h,η)
 end
 _F(U,θ2,σ2,Y) = sum((yi' * U) * Diagonal([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2]) * (U'*yi) for (yi,σℓ2) in zip(Y,σ2))
 function R(U,∇h,η)
@@ -184,8 +181,12 @@ function R(U,∇h,η)
 end
 
 # Updates: θ
-updateθ2(U,v,Y,method::Val{:roots}) = [updateθ2l(uj,v,Y,method) for uj in eachcol(U)]
-function updateθ2l(uj,σ2,Y,::Val{:roots})
+function updateθ2!(M::HPPCA,Y,method)
+    for (j,uj) in enumerate(eachcol(M.U))
+        M.θ[j] = updateθ2j(M.θ[j],uj,M.v,Y,method)
+    end
+end
+function updateθ2j(θj,uj,σ2,Y,::Val{:roots})
     c = [(uj'*yi)^2 for yi in Y]
     p = 1/sum(size.(Y,2)) * ones(length(c))
     L = length(p)
