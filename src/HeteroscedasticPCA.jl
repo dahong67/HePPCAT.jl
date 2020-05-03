@@ -1,18 +1,14 @@
 module HeteroscedasticPCA
 
+using LinearAlgebra: Diagonal, norm, qr, svd, tr, /
+using Logging
+
 include("../test/ref/polyratio.jl")
 include("../test/ref/utils.jl")
-
-using LinearAlgebra: svd, Diagonal, /, norm
-
 using Polynomials: Poly, poly
 using .PolynomialRatios
 using .Utils: posroots
-
 using Polynomials: roots
-using LinearAlgebra
-
-using Logging
 
 # Types
 struct HPPCA{T<:AbstractFloat}
