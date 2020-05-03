@@ -114,8 +114,7 @@ function updatev!(M::HPPCA,Y,method)
         M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
     end
 end
-function updatevl(vl,U,λλ,Yl,::RootFinding,tol=1e-14)
-    λ = (sqrt.(λλ)).^2
+function updatevl(vl,U,λ,Yl,::RootFinding,tol=1e-14)
     d, k = size(U)
     nl = size(Yl,2)
 
@@ -146,8 +145,8 @@ function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
     dFdU = gradF(U,λ,v,Y)
     ∇F = dFdU - U*(dFdU'U)
 
-    Δ, m = 1, 0
-    while F(U,λ,v,Y) - F(geodesic(U,∇F,α*Δ),λ,v,Y) > -σ * α*Δ * tr(∇F'*∇F)
+    Δ, m = α, 0
+    while F(U,λ,v,Y) - F(geodesic(U,∇F,Δ),λ,v,Y) > -σ * Δ * tr(∇F'*∇F)
         Δ *= β
         m += 1
         if m > maxsearches
@@ -155,7 +154,7 @@ function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
             break
         end
     end
-    return M.U .= geodesic(U,α*∇F,Δ)
+    return M.U .= geodesic(U,∇F,Δ)
 end
 function geodesic(U,X,t)
     k = size(U,2)
