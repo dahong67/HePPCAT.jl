@@ -19,6 +19,7 @@
   + [ ] New global maximization ideas for `v` and `θ` updates
 + [ ] Further enhancements
   + [ ] Add all methods from paper
+  + [ ] Add tests to cover more cases (e.g., blocks vs. flat)
   + [ ] Make reference implementations for tests simple / easily checkable
   + [ ] Simplify/unify tests and benchmarks
   + [ ] Add docs
