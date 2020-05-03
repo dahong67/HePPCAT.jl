@@ -92,15 +92,14 @@ end
 
 # Updates: F
 function updateF!(M::HPPCA,YY,::ExpectationMaximization,Vt)
-    U, θ, vv = M.U, sqrt.(M.λ), M.v
+    U, λ, vv = M.U, M.λ, M.v
     n = size.(YY,2)
     v, Y = vcat(fill.(vv,n)...), hcat(YY...)
 
-    λ = θ.^2
     ηt = permutedims(sqrt.(v))
     vt = permutedims(v)
 
-    Ztil = θ ./ ηt ./ (λ .+ vt) .* (U'*Y)
+    Ztil = sqrt.(λ) ./ ηt ./ (λ .+ vt) .* (U'*Y)
     Γsum = Diagonal([sum(1/(λj+vi) for vi in v) for λj in λ])
 
     F = svd( ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * Vt )
@@ -110,34 +109,34 @@ function updateF!(M::HPPCA,YY,::ExpectationMaximization,Vt)
 end
 
 # Updates: v
-function updatevl(vl,U,λ,Yl,::RootFinding,tol=1e-14)
-    θ = sqrt.(λ)
+function updatev!(M::HPPCA,Y,method)
+    for (l,Yl) in enumerate(Y)
+        M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
+    end
+end
+function updatevl(vl,U,λλ,Yl,::RootFinding,tol=1e-14)
+    λ = (sqrt.(λλ)).^2
     d, k = size(U)
     nl = size(Yl,2)
 
     UYl = U'Yl
     Li  = v -> (-nl*(d-k)*log(v) - norm(Yl-U*UYl)^2/v
-        - sum(nl*log(θ[j]^2+v) + sum(abs2,UYl[j,:])/(θ[j]^2+v) for j in 1:k))
+        - sum(nl*log(λ[j]+v) + sum(abs2,UYl[j,:])/(λ[j]+v) for j in 1:k))
     Lip = (Poly([norm(Yl-U*UYl)^2,-nl*(d-k)]) // poly(zeros(2))
-        - sum(Poly([nl*θ[j]^2-sum(abs2,UYl[j,:]),nl]) // poly(fill(-θ[j]^2,2)) for j in 1:k))
+        - sum(Poly([nl*λ[j]-sum(abs2,UYl[j,:]),nl]) // poly(fill(-λ[j],2)) for j in 1:k))
 
     criticalpoints = posroots(numerator(Lip), tol)
     optpoint = argmax(Li.(criticalpoints))
 
     return criticalpoints[optpoint]
 end
-function updatev!(M::HPPCA,Y,method)
-    for (l,Yl) in enumerate(Y)
-        M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
-    end
-end
-function updatevl(vi,U,λ,yi,::Val{:oldflatroots})  # only really for individual samples, not blocks
-    θ = sqrt.(λ)
+function updatevl(vi,U,λλ,yi,::Val{:oldflatroots})  # only really for individual samples, not blocks
+    λ = (sqrt.(λλ)).^2
     d, k = size(U)
 
     Uyi = U'yi
     Lip = Poly([(norm(yi)^2-norm(Uyi)^2),-(d-k)],:v) // poly(zeros(2),:v) -
-        sum(Poly([θ[j]^2-abs2(Uyi[j]),1.],:v) // poly(fill(-θ[j]^2,2),:v) for j in 1:k)
+        sum(Poly([λ[j]-abs2(Uyi[j]),1.],:v) // poly(fill(-λ[j],2),:v) for j in 1:k)
 
     allroots = roots(numerator(Lip))
     posroots = real.(filter(x -> real(x) ≈ x && real(x) > zero(real(x)),allroots))
@@ -145,7 +144,7 @@ function updatevl(vi,U,λ,yi,::Val{:oldflatroots})  # only really for individual
     optroot = argmax([
         -(d-k)*log(v) -
         (norm(yi)^2 - norm(Uyi)^2)/v -
-        sum(log(θ[j]^2+v) + abs2(Uyi[j])/(θ[j]^2+v) for j in 1:k)
+        sum(log(λ[j]+v) + abs2(Uyi[j])/(λ[j]+v) for j in 1:k)
         for v in posroots])
 
     return posroots[optroot]
