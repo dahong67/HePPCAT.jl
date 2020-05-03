@@ -28,17 +28,25 @@ rng = MersenneTwister(123)
             F0 = randn(rng, d, k)
 
             @testset "block" begin
-                Fhat, vhat = HeteroscedasticPCA.ppca(Y, k, 10, F0, Val(:sage))
+                Uhat, λhat, vhat = HeteroscedasticPCA.ppca(Y, k, 10, F0, Val(:sage))
                 vhat = [vcat(fill.(_vt,n)...) for _vt in vhat]
                 Fref, vref = Reference.SAGE.ppca(Yblock, k, 10, F0)
-                @test Fhat == svd.(Fref)
+                Frefsvd = svd.(Fref)
+                Uref = getfield.(Frefsvd,:U)
+                λref = [F.S.^2 for F in Frefsvd]
+                @test Uhat == Uref
+                @test λhat == λref
                 @test vhat[2:end] == vref[1:end-1]
             end
 
             @testset "flat" begin
-                Fhat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:sage))
+                Uhat, λhat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:sage))
                 Fref, vref = Reference.SAGE.ppca(Yflat, k, 10, F0)
-                @test Fhat == svd.(Fref)
+                Frefsvd = svd.(Fref)
+                Uref = getfield.(Frefsvd,:U)
+                λref = [F.S.^2 for F in Frefsvd]
+                @test Uhat == Uref
+                @test λhat == λref
                 @test vhat[2:end] == vref[1:end-1]
             end
         end

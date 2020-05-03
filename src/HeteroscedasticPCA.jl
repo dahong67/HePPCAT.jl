@@ -44,14 +44,12 @@ function ppca(Y,k,iters,init,::Val{:sage})
     M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     _Vt = svd(init).Vt
-    _VVt = [_Vt]
     for t = 1:iters
         updatev!(M,Y,RootFinding())
         _Vt = updateF!(M,Y,ExpectationMaximization(),_Vt)
         push!(MM, deepcopy(M))
-        push!(_VVt,copy(_Vt))
     end
-    return [SVD(M.U,sqrt.(M.λ),_Vt) for (M,_Vt) in zip(MM,_VVt)], getfield.(MM,:v)
+    return getfield.(MM,:U), getfield.(MM, :λ), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:mm})
     M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
