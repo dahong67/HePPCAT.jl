@@ -65,8 +65,8 @@ rng = MersenneTwister(123)
                 Uhat, θ2hat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:mm))
                 Fhat = Uhat[end] * Diagonal(sqrt.(θ2hat[end]))
                 Fref, vref = Reference.MM.ppca(Yflat, k, 10, F0)
-                @test Fhat == Fref
-                @test vhat[2:end] == vref[1:end-1]
+                @test Fhat ≈ Fref
+                @test vhat[2:end] ≈ vref[1:end-1]
             end
         end
     end
@@ -92,8 +92,8 @@ rng = MersenneTwister(123)
                 Uhat, θ2hat, vhat = HeteroscedasticPCA.ppca(Yflatlist, k, 10, F0, Val(:pgd))
                 Fhat = Uhat[end] * Diagonal(sqrt.(θ2hat[end]))
                 Fref, vref = Reference.PGD.ppca(Yflat, k, 10, F0)
-                @test Fhat == Fref
-                @test vhat[2:end] == vref[1:end-1]
+                @test Fhat ≈ Fref
+                @test vhat[2:end] ≈ vref[1:end-1]
             end
         end
     end
@@ -122,8 +122,8 @@ rng = MersenneTwister(123)
                 end
                 Fhat = Uhat[end] * Diagonal(sqrt.(θ2hat[end]))
                 Fref, vref = Reference.SGD.ppca(Yflat, k, 10, F0)
-                @test Fhat == Fref
-                @test vhat[2:end] == vref[1:end-1]
+                @test Fhat ≈ Fref
+                @test vhat[2:end] ≈ vref[1:end-1]
             end
         end
     end

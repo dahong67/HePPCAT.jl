@@ -57,7 +57,7 @@ function ppca(Y,k,iters,init,::Val{:mm})
     M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        updatev!(M,Y,Val(:oldflatroots))
+        updatev!(M,Y,RootFinding())
         updateλ!(M,Y,RootFinding())
         updateU!(M,Y,MinorizeMaximize())
         push!(MM,deepcopy(M))
@@ -69,7 +69,7 @@ function ppca(Y,k,iters,init,::Val{:pgd})
     M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        updatev!(M,Y,Val(:oldflatroots))
+        updatev!(M,Y,RootFinding())
         updateλ!(M,Y,RootFinding())
         L = sum(ynorm*maximum([λj/vi/(λj+vi) for λj in M.λ])   # todo: should ynorm be squared?
             for (ynorm,vi) in zip(Ynorms,M.v))
@@ -82,7 +82,7 @@ function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
     M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
-        updatev!(M,Y,Val(:oldflatroots))
+        updatev!(M,Y,RootFinding())
         updateλ!(M,Y,RootFinding())
         updateU!(M,Y,StiefelGradientAscent(max_line,α,β,σ))
         push!(MM,deepcopy(M))
@@ -129,25 +129,6 @@ function updatevl(vl,U,λλ,Yl,::RootFinding,tol=1e-14)
     optpoint = argmax(Li.(criticalpoints))
 
     return criticalpoints[optpoint]
-end
-function updatevl(vi,U,λλ,yi,::Val{:oldflatroots})  # only really for individual samples, not blocks
-    λ = (sqrt.(λλ)).^2
-    d, k = size(U)
-
-    Uyi = U'yi
-    Lip = Poly([(norm(yi)^2-norm(Uyi)^2),-(d-k)],:v) // poly(zeros(2),:v) -
-        sum(Poly([λ[j]-abs2(Uyi[j]),1.],:v) // poly(fill(-λ[j],2),:v) for j in 1:k)
-
-    allroots = roots(numerator(Lip))
-    posroots = real.(filter(x -> real(x) ≈ x && real(x) > zero(real(x)),allroots))
-
-    optroot = argmax([
-        -(d-k)*log(v) -
-        (norm(yi)^2 - norm(Uyi)^2)/v -
-        sum(log(λ[j]+v) + abs2(Uyi[j])/(λ[j]+v) for j in 1:k)
-        for v in posroots])
-
-    return posroots[optroot]
 end
 
 # Updates: U

@@ -13,7 +13,8 @@
   + [x] Fix inconsistencies related to `θ` vs `θ2`
   + [x] Try to further simplify the implementations but without changing the outputs
 + [ ] Changes with potential numerical impact
-  + [ ] Remove old root-finding method `:oldflatroots`
+  + [x] Remove old root-finding method `:oldflatroots`
+  + [ ] Make all updates handle blocks correctly
   + [ ] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
   + [ ] New global maximization ideas for `v` and `θ` updates
 + [ ] Further enhancements
