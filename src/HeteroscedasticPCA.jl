@@ -1,14 +1,12 @@
 module HeteroscedasticPCA
 
 using LinearAlgebra: Diagonal, norm, qr, svd, tr, /
+using IntervalArithmetic: interval, mid
+using IntervalRootFinding: roots, Newton
 using Logging
 
-include("../test/ref/polyratio.jl")
-include("../test/ref/utils.jl")
 using Polynomials: Poly, poly
-using .PolynomialRatios
-using .Utils: posroots
-using Polynomials: roots
+import Polynomials
 
 # Types
 struct HPPCA{T<:AbstractFloat}
@@ -112,17 +110,18 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
     d, k = size(U)
     nl = size(Yl,2)
 
-    UYl = U'Yl
-    Li  = v -> (-nl*(d-k)*log(v) - norm(Yl-U*UYl)^2/v
-        - sum(nl*log(λ[j]+v) + sum(abs2,UYl[j,:])/(λ[j]+v) for j in 1:k))
-    Lip = (Poly([norm(Yl-U*UYl)^2,-nl*(d-k)]) // poly(zeros(2))
-        - sum(Poly([nl*λ[j]-sum(abs2,UYl[j,:]),nl]) // poly(fill(-λ[j],2)) for j in 1:k))
+    α0, β0 = d-k, norm(Yl-U*U'Yl)^2/nl
+    β = [norm(uj'Yl)^2/nl for uj in eachcol(U)]
 
-    tol = 1e-7  # todo: choose tolerance adaptively
-    criticalpoints = posroots(numerator(Lip), tol)
-    optpoint = argmax(Li.(criticalpoints))
+    vl0opt = β0/α0
+    vljopt = max.(zero.(β), β .- λ)
+    vrange = interval(min(vl0opt,vljopt...), max(vl0opt,vljopt...))
 
-    return criticalpoints[optpoint]
+    tol = 1e-8  # todo: choose tolerance adaptively
+    vcritical = mid.(interval.(roots(v -> β0/v^2-α0/v + sum(β[j]/(λ[j]+v)^2 - 1/(λ[j]+v) for j in 1:k),vrange,Newton,tol)))
+    Lcritical = map(v -> -(α0*log(v)+β0/v + sum(log(λ[j]+v) + β[j]/(λ[j]+v) for j in 1:k)),vcritical)
+
+    return vcritical[argmax(Lcritical)]
 end
 
 # Updates: U
@@ -183,7 +182,7 @@ function updateλj(λj,uj,v,Y,::RootFinding)
                 (-v[lp] for lp in 1:L if lp != l)...
                 ])
         for l in 1:L)
-    posroots = filter(x -> real(x) ≈ x && real(x) > 0.0,roots(fpnum))
+    posroots = filter(x -> real(x) ≈ x && real(x) > 0.0,Polynomials.roots(fpnum))
     cand = [0.; real.(posroots)]
     ind = argmin(map(cand) do x
         sum(pl*(log(x+vl)+cl/(x+vl)) for (pl,cl,vl) in zip(p,c,v))
