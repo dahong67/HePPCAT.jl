@@ -153,41 +153,40 @@ end
 # Updates: U
 polar(A) = polar(svd(A))
 polar(A::SVD) = A.U*A.V'
-∂h(U,λ,v,Y) = sum(yi * yi' * U * Diagonal([λj/vi/(λj+vi) for λj in λ]) for (yi,vi) in zip(Y,v))
+gradF(U,λ,v,Y) = sum(yi * yi' * U * Diagonal(λ./vi./(λ.+vi)) for (yi,vi) in zip(Y,v))
+F(U,λ,v,Y) = sum((yi' * U) * Diagonal([λj/vi/(λj+vi) for λj in λ]) * (U'*yi) for (yi,vi) in zip(Y,v))
 
-updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(∂h(M.U,M.λ,M.v,Y)))
-updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent) = (M.U .= polar(M.U + pga.stepsize*∂h(M.U,M.λ,M.v,Y)))
+updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)))
+updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent) = (M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y)))
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
-    α,β,σ,max_line = sga.stepsize, sga.contraction, sga.tol, sga.maxsearches
+    α, β, σ, maxsearches = sga.stepsize, sga.contraction, sga.tol, sga.maxsearches
     U, λ, v = M.U, M.λ, M.v
-    d,k = size(U)
-    grad = ∂h(U,λ,v,Y)
-    ∇h = grad - U*(grad'U)
 
-    f_U = _F(U,λ,v,Y)
+    dFdU = gradF(U,λ,v,Y)
+    ∇F = dFdU - U*(dFdU'U)
 
-    η=1
-    iter = 0
-    while (f_U - _F(R(U,α*∇h,η),λ,v,Y)) > -σ * tr(∇h'*(η*α*∇h))
-        η=β*η
-        iter = iter + 1
-        if(iter > max_line)
+    Δ, m = 1, 0
+    while F(U,λ,v,Y) - F(geodesic(U,∇F,α*Δ),λ,v,Y) > -σ * α*Δ * tr(∇F'*∇F)
+        Δ *= β
+        m += 1
+        if m > maxsearches
             @warn "Exceeded maximum line search iterations. Accuracy not guaranteed."
             break
         end
     end
-    return M.U .= R(U,α*∇h,η)
+    return M.U .= geodesic(U,α*∇F,Δ)
 end
-_F(U,λ,v,Y) = sum((yi' * U) * Diagonal([λj/vi/(λj+vi) for λj in λ]) * (U'*yi) for (yi,vi) in zip(Y,v))
-function R(U,∇h,η)
-    d,k = size(U)
-    A = U'∇h
-    A = 0.5*(A' - A)
-    K = ∇h - U*(U'∇h)
-    _Q,R = qr(K); Q = Matrix(_Q)
-    MN = exp(η*[A -R'; R zeros(k,k)])[:,1:k]
+function geodesic(U,X,t)
+    k = size(U,2)
+
+    A = U'X
+    A = (A' - A)/2
+
+    Q,R = qr(X - U*(U'X))
+    MN = exp(t*[A -R'; R zeros(k,k)])[:,1:k]
     M, N = MN[1:k,:], MN[k+1:end,:]
-    return U*M + Q*N
+
+    return U*M + Matrix(Q)*N
 end
 
 # Updates: λ

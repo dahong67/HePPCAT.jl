@@ -7,11 +7,11 @@
 ## TODO
 
 + [x] Copy implementations from previous code and get them running
-+ [ ] Changes without numerical impact
++ [x] Changes without numerical impact
   + [x] Initial refactor using cleaner and more uniform signatures for updates (and make them mutating)
   + [x] Some initial tests (that test `==` not `≈`) and benchmarks
   + [x] Fix inconsistencies related to `θ` vs `θ2`
-  + [ ] Try to further simplify the implementations but without changing the outputs
+  + [x] Try to further simplify the implementations but without changing the outputs
 + [ ] Changes with potential numerical impact
   + [ ] Remove old root-finding method `:oldflatroots`
   + [ ] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
