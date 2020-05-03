@@ -35,10 +35,10 @@
         + using `zip` in hopes of discouraging bounds checking
         + creating a callable `RationalSum` type in hopes of discouraging unnecessary specializations of `roots`
         + skipping root-finding if the range is already less than the tolerance
+        + using `Bisection` instead of `Newton`
       + some things to check/try
         + profile to see where time is spent
         + try version that clears the denominator but does not expand (i.e., don't form a polynomial in the canonical basis) - does the interval method somehow converge more slowly here due to the division?
-        + try `Bisection` instead of `Newton`
     + Need to profile and understand where/why its slow
     + Maybe add specific implementations for this case
 + [ ] Run through `JuliaFormatter`
