@@ -3,7 +3,7 @@ module HeteroscedasticPCA
 include("../test/ref/polyratio.jl")
 include("../test/ref/utils.jl")
 
-using LinearAlgebra: svd, SVD, Diagonal, /, norm
+using LinearAlgebra: svd, Diagonal, /, norm
 
 using Polynomials: Poly, poly
 using .PolynomialRatios
@@ -129,8 +129,10 @@ function updatevl(vl,U,λ,Yl,::RootFinding,tol=1e-14)
 end
 
 # Updates: U
-polar(A) = polar(svd(A))
-polar(A::SVD) = A.U*A.V'
+function polar(A)
+    F = svd(A)
+    return F.U*F.Vt
+end
 gradF(U,λ,v,Y) = sum(yi * yi' * U * Diagonal(λ./vi./(λ.+vi)) for (yi,vi) in zip(Y,v))
 F(U,λ,v,Y) = sum((yi' * U) * Diagonal([λj/vi/(λj+vi) for λj in λ]) * (U'*yi) for (yi,vi) in zip(Y,v))
 
