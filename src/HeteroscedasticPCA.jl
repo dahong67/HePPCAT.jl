@@ -108,7 +108,7 @@ function updatev!(M::HPPCA,Y,method)
         M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
     end
 end
-function updatevl(vl,U,λ,Yl,::RootFinding,tol=1e-14)
+function updatevl(vl,U,λ,Yl,::RootFinding)
     d, k = size(U)
     nl = size(Yl,2)
 
@@ -118,6 +118,7 @@ function updatevl(vl,U,λ,Yl,::RootFinding,tol=1e-14)
     Lip = (Poly([norm(Yl-U*UYl)^2,-nl*(d-k)]) // poly(zeros(2))
         - sum(Poly([nl*λ[j]-sum(abs2,UYl[j,:]),nl]) // poly(fill(-λ[j],2)) for j in 1:k))
 
+    tol = 1e-7  # todo: choose tolerance adaptively
     criticalpoints = posroots(numerator(Lip), tol)
     optpoint = argmax(Li.(criticalpoints))
 
