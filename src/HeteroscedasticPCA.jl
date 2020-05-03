@@ -5,9 +5,6 @@ using IntervalArithmetic: interval, mid
 using IntervalRootFinding: roots, Newton
 using Logging
 
-using Polynomials: Poly, poly
-import Polynomials
-
 # Types
 struct HPPCA{T<:AbstractFloat}
     U::Matrix{T}   # eigvecs of FF'
@@ -172,22 +169,22 @@ function updateλ!(M::HPPCA,Y,method)
     end
 end
 function updateλj(λj,uj,v,Y,::RootFinding)
-    c = [(uj'*yi)^2 for yi in Y]
-    p = 1/sum(size.(Y,2)) * ones(length(c))
-    L = length(p)
-    fpnum = sum(
-        p[l]*poly([
-                c[l]-v[l],
-                (-v[lp] for lp in 1:L if lp != l)...,
-                (-v[lp] for lp in 1:L if lp != l)...
-                ])
-        for l in 1:L)
-    posroots = filter(x -> real(x) ≈ x && real(x) > 0.0,Polynomials.roots(fpnum))
-    cand = [0.; real.(posroots)]
-    ind = argmin(map(cand) do x
-        sum(pl*(log(x+vl)+cl/(x+vl)) for (pl,cl,vl) in zip(p,c,v))
-    end)
-    return cand[ind]
+    n = size.(Y,2)
+    L = length(n)
+    β = [norm(uj'Yl)^2 for Yl in Y]
+
+    λjlopt = max.(zero.(β), β .- v)
+    λmin,λmax = extrema(λjlopt)
+    λrange = interval(λmin,λmax)
+
+    tol = 1e-8  # todo: choose tolerance adaptively
+    λmax-λmin < tol && return (λmax+λmin)/2
+    λcritical = mid.(interval.(roots(λ -> sum(β[l]/(λ+v[l])^2 - n[l]/(λ+v[l]) for l in 1:L),λrange,Newton,tol)))
+    isempty(λcritical) && return λmin
+    length(λcritical) == 1 && return only(λcritical)
+    Lcritical = map(λ -> -sum(n[l]*log(λ+v[l]) + β[l]/(λ+v[l]) for l in 1:L),λcritical)
+
+    return λcritical[argmax(Lcritical)]
 end
 
 end
