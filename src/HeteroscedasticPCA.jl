@@ -112,10 +112,14 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
 
     vl0opt = β0/α0
     vljopt = max.(zero.(β), β .- λ)
-    vrange = interval(min(vl0opt,vljopt...), max(vl0opt,vljopt...))
+    vmin, vmax = min(vl0opt,vljopt...), max(vl0opt,vljopt...)
+    vrange = interval(vmin,vmax)
 
     tol = 1e-8  # todo: choose tolerance adaptively
+    vmax-vmin < tol && return (vmax+vmin)/2
     vcritical = mid.(interval.(roots(v -> β0/v^2-α0/v + sum(β[j]/(λ[j]+v)^2 - 1/(λ[j]+v) for j in 1:k),vrange,Newton,tol)))
+    isempty(vcritical) && return vmin
+    length(vcritical) == 1 && return only(vcritical)
     Lcritical = map(v -> -(α0*log(v)+β0/v + sum(log(λ[j]+v) + β[j]/(λ[j]+v) for j in 1:k)),vcritical)
 
     return vcritical[argmax(Lcritical)]
