@@ -19,7 +19,7 @@
   + [ ] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
   + [ ] Work on `updateF!` - can `Vt` be dropped?
   + [x] New global maximization ideas for `v` and `θ` updates
-  + [ ] Use `geodesic` method from `Manifolds.jl`
+  + [x] ~~Use `geodesic` method from `Manifolds.jl`~~ (`Manifolds.jl` appears to have the "embedded geodesic" whereas we are using the one from the "canonical metric" discussed in `edelman1998tgo`)
 + [ ] Further enhancements
   + [ ] Give updates meaningful return values
   + [ ] Add all methods from paper
@@ -41,4 +41,5 @@
         + try version that clears the denominator but does not expand (i.e., don't form a polynomial in the canonical basis) - does the interval method somehow converge more slowly here due to the division?
     + Need to profile and understand where/why its slow
     + Maybe add specific implementations for this case
+  + [ ] Consider contributing code for the canonical metric to `Manifolds.jl`
 + [ ] Run through `JuliaFormatter`
