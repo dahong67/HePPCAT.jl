@@ -1,8 +1,8 @@
 module HeteroscedasticPCA
 
-using LinearAlgebra: Diagonal, norm, qr, svd, tr, /
 using IntervalArithmetic: interval, mid
-using IntervalRootFinding: roots, Newton
+using IntervalRootFinding: Newton, roots
+using LinearAlgebra: Diagonal, norm, qr, svd, tr, /
 using Logging
 
 # Types

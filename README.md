@@ -18,7 +18,7 @@
   + [ ] Make all updates handle blocks correctly
   + [ ] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
   + [ ] Work on `updateF!` - can `Vt` be dropped?
-  + [ ] New global maximization ideas for `v` and `θ` updates
+  + [x] New global maximization ideas for `v` and `θ` updates
   + [ ] Use `geodesic` method from `Manifolds.jl`
 + [ ] Further enhancements
   + [ ] Give updates meaningful return values
