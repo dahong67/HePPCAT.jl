@@ -11,4 +11,5 @@ Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 Manifolds = "1cead3c2-87b3-11e9-0ccd-23c62b72b94e"
 
 [compat]
+Manifolds = "0.3"
 julia = "1.2"
