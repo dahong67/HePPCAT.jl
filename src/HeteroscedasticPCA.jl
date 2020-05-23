@@ -7,8 +7,8 @@ using Logging
 
 # Types
 struct HPPCA{T<:AbstractFloat}
-    U::Matrix{T}   # eigvecs of FF'
-    λ::Vector{T}   # eigvals of FF'
+    U::Matrix{T}   # eigvecs of FF' (factor/spike covariance)
+    λ::Vector{T}   # eigvals of FF' (factor/spike covariance)
     v::Vector{T}   # block noise variances
     function HPPCA{T}(U,λ,v) where {T<:AbstractFloat}
         size(U,2) == length(λ) || throw(DimensionMismatch("U has dimensions $(size(U)) but λ has length $(length(λ))"))
