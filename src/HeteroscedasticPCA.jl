@@ -9,13 +9,15 @@ using Logging
 struct HPPCA{T<:AbstractFloat}
     U::Matrix{T}   # eigvecs of FF' (factor/spike covariance)
     λ::Vector{T}   # eigvals of FF' (factor/spike covariance)
+    Vt::Matrix{T}  # (transposed) eigvecs of F'F (i.e., right singvecs of F)
     v::Vector{T}   # block noise variances
-    function HPPCA{T}(U,λ,v) where {T<:AbstractFloat}
+    function HPPCA{T}(U,λ,Vt,v) where {T<:AbstractFloat}
         size(U,2) == length(λ) || throw(DimensionMismatch("U has dimensions $(size(U)) but λ has length $(length(λ))"))
-        new{T}(U,λ,v)
+        size(Vt,1) == length(λ) || throw(DimensionMismatch("Vt has dimensions $(size(Vt)) but λ has length $(length(λ))"))
+        new{T}(U,λ,Vt,v)
     end
 end
-HPPCA(U::Matrix{T},λ::Vector{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA{T}(U,λ,v)
+HPPCA(U::Matrix{T},λ::Vector{T},Vt::Matrix{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA{T}(U,λ,Vt,v)
 
 struct RootFinding end
 struct ExpectationMaximization end
@@ -32,18 +34,17 @@ end
 
 # PPCA
 function ppca(Y,k,iters,init,::Val{:sage})
-    M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]
-    _Vt = svd(init).Vt
     for t = 1:iters
         updatev!(M,Y,RootFinding())
-        _Vt = updateF!(M,Y,ExpectationMaximization(),_Vt)
+        updateF!(M,Y,ExpectationMaximization())
         push!(MM, deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM, :λ), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:mm})
-    M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,RootFinding())
@@ -55,7 +56,7 @@ function ppca(Y,k,iters,init,::Val{:mm})
 end
 function ppca(Y,k,iters,init,::Val{:pgd})
     Ynorms = vec(mapslices(norm,hcat(Y...),dims=1))
-    M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,RootFinding())
@@ -68,7 +69,7 @@ function ppca(Y,k,iters,init,::Val{:pgd})
     return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
-    M = HPPCA(svd(init).U,svd(init).S.^2,zeros(length(Y)))
+    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,RootFinding())
@@ -80,8 +81,8 @@ function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
 end
 
 # Updates: F
-function updateF!(M::HPPCA,YY,::ExpectationMaximization,Vt)
-    U, λ, vv = M.U, M.λ, M.v
+function updateF!(M::HPPCA,YY,::ExpectationMaximization)
+    U, λ, Vt, vv = M.U, M.λ, M.Vt, M.v
     n = size.(YY,2)
     v, Y = vcat(fill.(vv,n)...), hcat(YY...)
 
@@ -94,7 +95,7 @@ function updateF!(M::HPPCA,YY,::ExpectationMaximization,Vt)
     F = svd( ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * Vt )
     M.U .= F.U
     M.λ .= F.S.^2
-    return F.Vt
+    M.Vt .= F.Vt
 end
 
 # Updates: v

@@ -17,7 +17,7 @@
   + [ ] Relax tests by testing updates individually on a few sets of iterates; testing the full iterative method may be too strict since numerical differences may accumulate.
   + [ ] Make all updates handle blocks correctly
   + [ ] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
-  + [ ] Work on `updateF!` - can `Vt` be dropped?
+  + [x] Work on `updateF!` - ~~can `Vt` be dropped?~~ decided to instead include `Vt` in the `HPPCA` type
   + [x] New global maximization ideas for `v` and `θ` updates
   + [x] ~~Use `geodesic` method from `Manifolds.jl`~~ (`Manifolds.jl` appears to have the "embedded geodesic" whereas we are using the one from the "canonical metric" discussed in `edelman1998tgo`)
 + [ ] Further enhancements
