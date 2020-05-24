@@ -2,7 +2,7 @@ module HeteroscedasticPCA
 
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
-using LinearAlgebra: Diagonal, norm, qr, svd, tr, /
+using LinearAlgebra: Diagonal, I, norm, qr, svd, tr, /
 using Logging
 
 # Types
@@ -81,18 +81,15 @@ function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
 end
 
 # Updates: F
-function updateF!(M::HPPCA,YY,::ExpectationMaximization)
-    U, λ, Vt, vv = M.U, M.λ, M.Vt, M.v
-    n = size.(YY,2)
-    v, Y = vcat(fill.(vv,n)...), hcat(YY...)
+function updateF!(M::HPPCA,Y,::ExpectationMaximization)
+    n, L = size.(Y,2), length(Y)
+    Λ = Diagonal(M.λ)
+    Γ = [inv(Λ + M.v[l]*I) for l in 1:L]
+    Z = [Γ[l]*sqrt(Λ)*M.U'*Y[l] for l in 1:L]
+    num = sum(Y[l]*Z[l]'/M.v[l] for l in 1:L)
+    den = sum(Z[l]*Z[l]'/M.v[l] + n[l]*Γ[l] for l in 1:L)
 
-    ηt = permutedims(sqrt.(v))
-    vt = permutedims(v)
-
-    Ztil = sqrt.(λ) ./ ηt ./ (λ .+ vt) .* (U'*Y)
-    Γsum = Diagonal([sum(1/(λj+vi) for vi in v) for λj in λ])
-
-    F = svd( ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * Vt )
+    F = svd((num / den) * M.Vt)
     M.U .= F.U
     M.λ .= F.S.^2
     M.Vt .= F.Vt
