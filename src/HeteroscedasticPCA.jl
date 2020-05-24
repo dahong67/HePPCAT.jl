@@ -142,37 +142,29 @@ F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in 
 
 updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)))
 function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
-    if pga.stepsize < Inf
-        M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
-    else
-        M.U .= polar(gradF(M.U,M.λ,M.v,Y))
-    end
+    pga.stepsize == Inf && return M.U .= polar(gradF(M.U,M.λ,M.v,Y))
+    M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
 end
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
-    α, β, σ, maxsearches = sga.stepsize, sga.contraction, sga.tol, sga.maxsearches
-    U, λ, v = M.U, M.λ, M.v
+    dFdU = gradF(M.U,M.λ,M.v,Y)
+    ∇F = dFdU - M.U*(dFdU'M.U)
 
-    dFdU = gradF(U,λ,v,Y)
-    ∇F = dFdU - U*(dFdU'U)
-
-    Δ, m = α, 0
-    while F(U,λ,v,Y) - F(geodesic(U,∇F,Δ),λ,v,Y) > -σ * Δ * tr(∇F'*∇F)
-        Δ *= β
-        m += 1
-        if m > maxsearches
-            @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."
-            break
-        end
+    F0, FΔ = F(M.U,M.λ,M.v,Y), sga.tol * norm(∇F)^2
+    for m in 1:sga.maxsearches
+        Δ = sga.stepsize * sga.contraction^(m-1)
+        (F(geodesic(M.U,∇F,Δ),M.λ,M.v,Y) >= F0 + Δ * FΔ) && return M.U .= geodesic(M.U,∇F,Δ)
     end
-    return M.U .= geodesic(U,∇F,Δ)
+    @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."
+    Δ = sga.stepsize * sga.contraction^sga.maxsearches
+    return M.U .= geodesic(M.U,∇F,Δ)
 end
+skew(A) = (A'-A)/2
 function geodesic(U,X,t)
     k = size(U,2)
 
-    A = U'X
-    A = (A' - A)/2
-
+    A = skew(U'X)
     Q,R = qr(X - U*(U'X))
+
     MN = exp(t*[A -R'; R zeros(k,k)])[:,1:k]
     M, N = MN[1:k,:], MN[k+1:end,:]
 
