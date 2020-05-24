@@ -29,8 +29,7 @@ function ppca(Y,k,iters,init)
         U[t+1] = updateU(U[t],θ2[t+1],v[t],Y,1/L)
     end
     v[end] = updatev(U[end],θ2[end],Y)
-    Fhat = U[end] * Diagonal(sqrt.(θ2[end]))
-    return Fhat, v
+    return U, θ2, v
 end
 
 

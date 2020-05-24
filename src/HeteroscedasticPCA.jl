@@ -154,7 +154,7 @@ function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
         Δ *= β
         m += 1
         if m > maxsearches
-            @warn "Exceeded maximum line search iterations. Accuracy not guaranteed."
+            @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."
             break
         end
     end
