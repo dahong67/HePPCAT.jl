@@ -5,6 +5,13 @@ using IntervalRootFinding: Newton, roots
 using LinearAlgebra: Diagonal, I, norm, qr, svd, tr, /
 using Logging
 
+# findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
+# argmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L830
+# part of pull request https://github.com/JuliaLang/julia/pull/35316
+Base.findmax(f, domain) = mapfoldl(x -> (f(x), x), _rf_findmax, domain)
+_rf_findmax((fm, m), (fx, x)) = isless(fm, fx) ? (fx, x) : (fm, m)
+Base.argmax(f, domain) = findmax(f, domain)[2]
+
 # Types
 struct HPPCA{T<:AbstractFloat}
     U::Matrix{T}   # eigvecs of FF' (factor/spike covariance)
@@ -105,22 +112,24 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
     d, k = size(U)
     nl = size(Yl,2)
 
+    # Compute root bounds
     α0, β0 = d-k, norm(Yl-U*U'Yl)^2/nl
     β = [norm(uj'Yl)^2/nl for uj in eachcol(U)]
+    vmin, vmax = extrema([β0/α0; max.(zero.(β), β .- λ)])
 
-    vl0opt = β0/α0
-    vljopt = max.(zero.(β), β .- λ)
-    vmin, vmax = min(vl0opt,vljopt...), max(vl0opt,vljopt...)
-    vrange = interval(vmin,vmax)
-
+    # Compute roots
     tol = 1e-8  # todo: choose tolerance adaptively
     vmax-vmin < tol && return (vmax+vmin)/2
-    vcritical = mid.(interval.(roots(v -> β0/v^2-α0/v + sum(β[j]/(λ[j]+v)^2 - 1/(λ[j]+v) for j in 1:k),vrange,Newton,tol)))
+    vcritical = roots(interval(vmin,vmax),Newton,tol) do v
+        β0/v^2-α0/v + sum(β[j]/(λ[j]+v)^2 - 1/(λ[j]+v) for j in 1:k)
+    end
     isempty(vcritical) && return vmin
-    length(vcritical) == 1 && return only(vcritical)
-    Lcritical = map(v -> -(α0*log(v)+β0/v + sum(log(λ[j]+v) + β[j]/(λ[j]+v) for j in 1:k)),vcritical)
+    length(vcritical) == 1 && return mid(interval(only(vcritical)))
 
-    return vcritical[argmax(Lcritical)]
+    # Return maximizer
+    return argmax(mid.(interval.(vcritical))) do v
+        -(α0*log(v)+β0/v + sum(log(λ[j]+v) + β[j]/(λ[j]+v) for j in 1:k))
+    end
 end
 
 # Updates: U
