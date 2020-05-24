@@ -12,11 +12,11 @@
   + [x] Some initial tests (that test `==` not `≈`) and benchmarks
   + [x] Fix inconsistencies related to `θ` vs `θ2`
   + [x] Try to further simplify the implementations but without changing the outputs
-+ [ ] Changes with potential numerical impact
++ [x] Changes with potential numerical impact
   + [x] Remove old root-finding method `:oldflatroots`
   + [x] Relax tests by testing updates individually on a few sets of iterates; testing the full iterative method may be too strict since numerical differences may accumulate.
   + [x] Make all updates handle blocks correctly
-  + [ ] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
+  + [x] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
   + [x] Work on `updateF!` - ~~can `Vt` be dropped?~~ decided to instead include `Vt` in the `HPPCA` type
   + [x] New global maximization ideas for `v` and `θ` updates
   + [x] ~~Use `geodesic` method from `Manifolds.jl`~~ (`Manifolds.jl` appears to have the "embedded geodesic" whereas we are using the one from the "canonical metric" discussed in `edelman1998tgo`)

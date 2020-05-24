@@ -112,7 +112,7 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
     d, k = size(U)
     nl = size(Yl,2)
 
-    # Compute root bounds
+    # Compute coefficients and root bounds
     α0, β0 = d-k, norm(Yl-U*U'Yl)^2/nl
     β = [norm(uj'Yl)^2/nl for uj in eachcol(U)]
     vmin, vmax = extrema([β0/α0; max.(zero.(β), β .- λ)])
@@ -178,22 +178,25 @@ function updateλ!(M::HPPCA,Y,method)
     end
 end
 function updateλj(λj,uj,v,Y,::RootFinding)
-    n = size.(Y,2)
-    L = length(n)
+    n, L = size.(Y,2), length(Y)
+
+    # Compute coefficients and root bounds
     β = [norm(uj'Yl)^2 for Yl in Y]
+    λmin, λmax = extrema(max.(zero.(β), β .- v))
 
-    λjlopt = max.(zero.(β), β .- v)
-    λmin,λmax = extrema(λjlopt)
-    λrange = interval(λmin,λmax)
-
+    # Compute roots
     tol = 1e-8  # todo: choose tolerance adaptively
     λmax-λmin < tol && return (λmax+λmin)/2
-    λcritical = mid.(interval.(roots(λ -> sum(β[l]/(λ+v[l])^2 - n[l]/(λ+v[l]) for l in 1:L),λrange,Newton,tol)))
+    λcritical = roots(interval(λmin,λmax),Newton,tol) do λ
+        sum(β[l]/(λ+v[l])^2 - n[l]/(λ+v[l]) for l in 1:L)
+    end
     isempty(λcritical) && return λmin
-    length(λcritical) == 1 && return only(λcritical)
-    Lcritical = map(λ -> -sum(n[l]*log(λ+v[l]) + β[l]/(λ+v[l]) for l in 1:L),λcritical)
+    length(λcritical) == 1 && return mid(interval(only(λcritical)))
 
-    return λcritical[argmax(Lcritical)]
+    # Return maximizer
+    return argmax(mid.(interval.(λcritical))) do λ
+        -sum(n[l]*log(λ+v[l]) + β[l]/(λ+v[l]) for l in 1:L)
+    end
 end
 
 end
