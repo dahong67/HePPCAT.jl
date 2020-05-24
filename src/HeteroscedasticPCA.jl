@@ -131,8 +131,8 @@ function polar(A)
     F = svd(A)
     return F.U*F.Vt
 end
-gradF(U,λ,v,Y) = sum(yi * yi' * U * Diagonal(λ./vi./(λ.+vi)) for (yi,vi) in zip(Y,v))
-F(U,λ,v,Y) = sum((yi' * U) * Diagonal([λj/vi/(λj+vi) for λj in λ]) * (U'*yi) for (yi,vi) in zip(Y,v))
+gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in zip(Y,v))
+F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in zip(Y,v))
 
 updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)))
 function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
