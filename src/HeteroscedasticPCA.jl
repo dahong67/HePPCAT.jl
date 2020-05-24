@@ -61,9 +61,9 @@ function ppca(Y,k,iters,init,::Val{:pgd})
     for t = 1:iters
         updatev!(M,Y,RootFinding())
         updateλ!(M,Y,RootFinding())
-        L = sum(ynorm*maximum([λj/vi/(λj+vi) for λj in M.λ])   # todo: should ynorm be squared?
+        L = sum(ynorm^2*maximum([λj/vi/(λj+vi) for λj in M.λ])
             for (ynorm,vi) in zip(Ynorms,M.v))
-        updateU!(M,Y,ProjectedGradientAscent(L))
+        updateU!(M,Y,ProjectedGradientAscent(1/L))
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
@@ -135,7 +135,13 @@ gradF(U,λ,v,Y) = sum(yi * yi' * U * Diagonal(λ./vi./(λ.+vi)) for (yi,vi) in z
 F(U,λ,v,Y) = sum((yi' * U) * Diagonal([λj/vi/(λj+vi) for λj in λ]) * (U'*yi) for (yi,vi) in zip(Y,v))
 
 updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)))
-updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent) = (M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y)))
+function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
+    if pga.stepsize < Inf
+        M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
+    else
+        M.U .= polar(gradF(M.U,M.λ,M.v,Y))
+    end
+end
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
     α, β, σ, maxsearches = sga.stepsize, sga.contraction, sga.tol, sga.maxsearches
     U, λ, v = M.U, M.λ, M.v

@@ -26,7 +26,7 @@ function ppca(Y,k,iters,init)
         v[t] = updatev(U[t],θ2[t],Y)
         θ2[t+1] = updateθ2(U[t],v[t],Y)
         L = updateL(Ynorms,θ2[t+1],v[t])
-        U[t+1] = updateU(U[t],θ2[t+1],v[t],Y,L)
+        U[t+1] = updateU(U[t],θ2[t+1],v[t],Y,1/L)
     end
     v[end] = updatev(U[end],θ2[end],Y)
     Fhat = U[end] * Diagonal(sqrt.(θ2[end]))
@@ -35,7 +35,7 @@ end
 
 
 updateL(ynorms,θ2,σ2) = sum(
-        ynorm*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2])
+        ynorm^2*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2])
         for (ynorm,σℓ2) in zip(ynorms,σ2)
 )
 
@@ -51,7 +51,7 @@ end
 ∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(eachcol(Y),v))
 
 # Updates
-updateU(U,θ2,v,Y,α) = polar(U + α*∂h(U,θ2,v,Y))
+updateU(U,θ2,v,Y,α) = polar(α < Inf ? U + α*∂h(U,θ2,v,Y) : ∂h(U,θ2,v,Y))
 # function updateU(U,θ2,σ2,YY::AbstractBlockArray)  # todo: use memory more carefully
 #     nl = [size(Yl,2) for Yl in eachblock(Y)]
 #     Λ = [Yl*Yl'/size(Yl,2) for Yl in eachblock(Y)]
