@@ -293,3 +293,26 @@ end
         end
     end
 end
+
+@testset "updateλ! (RootFinding, block)" begin
+    nfull, vfull = (40, 10), (4, 1)
+    d, k = 25, 3
+    for L = 1:2
+        n, v = nfull[1:L], vfull[1:L]
+        F, Z = randn(rng, d, k), [randn(rng, k, nl) for nl in n]
+        Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
+
+        Yflat = collect(eachcol(hcat(Y...)))
+        F0 = randn(rng, d, k)
+
+        Uhat, λhat, vhat = HeteroscedasticPCA.ppca(Y, k, 10, F0, Val(:sage))
+        VtI = Matrix{Float64}(I,k,k)
+        @test all(zip(Uhat[2:end],λhat[2:end],vhat[2:end])) do (U,λ,vv)
+            Mblock = HeteroscedasticPCA.HPPCA(copy(U), copy(λ), copy(VtI), copy(vv))
+            HeteroscedasticPCA.updateλ!(Mblock,Y,HeteroscedasticPCA.RootFinding())
+            Mflat = HeteroscedasticPCA.HPPCA(copy(U), copy(λ), copy(VtI), vcat(fill.(copy(vv),n)...))
+            HeteroscedasticPCA.updateλ!(Mflat,Yflat,HeteroscedasticPCA.RootFinding())
+            Mblock.λ ≈ Mflat.λ
+        end
+    end
+end

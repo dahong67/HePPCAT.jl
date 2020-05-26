@@ -182,7 +182,7 @@ function updateλj(λj,uj,v,Y,::RootFinding)
 
     # Compute coefficients and root bounds
     β = [norm(uj'Yl)^2 for Yl in Y]
-    λmin, λmax = extrema(max.(zero.(β), β .- v))
+    λmin, λmax = extrema(max.(zero.(β), β./n .- v))
 
     # Compute roots
     tol = 1e-8  # todo: choose tolerance adaptively
