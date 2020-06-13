@@ -1,27 +1,18 @@
-# algorithms: sage
-
-# todo:
-# + block version for shared noise variances
-# + sometimes root-finding finds no solutions, figure out how to handle
-
 module SAGE
 
 include("polyratio.jl")
 include("utils.jl")
 
-using BlockArrays: AbstractBlockArray, eachblock
-using BlockArrays: BlockArray
 using LinearAlgebra: svd, SVD, Diagonal, /, norm
-
 using Polynomials: Poly, poly
 using .PolynomialRatios
 using .Utils: posroots
 
 # Updates
-updateF(F,v,Y) = updateF(svd(F),v,Y)
-updateF(F::SVD,v,Y::BlockArray) = updateF(F,v,Matrix(Y))
-function updateF(F::SVD,v,Y)  # todo: use memory more carefully
-    U, θ, V = F
+function updateF(F,vblocks,Yblocks)  # todo: use memory more carefully
+    Y = hcat(Yblocks...)
+    v = vcat(fill.(vblocks,size.(Yblocks,2))...)
+    U, θ, V = svd(F)
 
     θ2 = θ.^2
     ηt = permutedims(sqrt.(v))
@@ -33,30 +24,9 @@ function updateF(F::SVD,v,Y)  # todo: use memory more carefully
     return ( (Y*(Ztil./ηt)') / (Ztil*Ztil'+Diagonal(Γsum)) ) * V'
 end
 
-updatev(F,Y) = updatev(svd(F),Y)
-updatev(F::SVD,Y) = [_updatevi(F,yi) for yi in eachcol(Y)]
-function _updatevi(F::SVD,yi,tol=1e-14)
-    U, θ, _ = F
-    d, k = size(F)
-
-    Uyi = U'yi
-    Li  = v -> (-(d-k)*log(v) - norm(yi-U*Uyi)^2/v
-        - sum(log(θ[j]^2+v) + abs2(Uyi[j])/(θ[j]^2+v) for j in 1:k))
-    Lip = (Poly([norm(yi-U*Uyi)^2,-(d-k)]) // poly(zeros(2))
-        - sum(Poly([θ[j]^2-abs2(Uyi[j]),1.]) // poly(fill(-θ[j]^2,2)) for j in 1:k))
-
-    criticalpoints = posroots(numerator(Lip), tol)
-    optpoint = argmax(Li.(criticalpoints))
-
-    return criticalpoints[optpoint]
-end
-
-updatev(F::SVD,Y::AbstractBlockArray) =
-    vcat([fill(_updatevl(F,Yl),size(Yl,2)) for Yl in eachblock(Y)]...)
-updatev(F::SVD,Y::BlockArray) =
-    vcat([fill(_updatevl(F,Yl),size(Yl,2)) for Yl in Y.blocks]...)
-function _updatevl(F::SVD,Yl,tol=1e-14)
-    U, θ, _ = F
+updatev(F,Y) = [_updatevl(F,Yl) for Yl in Y]
+function _updatevl(F,Yl,tol=1e-14)
+    U, θ, _ = svd(F)
     d, k = size(F)
     nl = size(Yl,2)
 

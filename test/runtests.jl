@@ -17,12 +17,9 @@ rng = MersenneTwister(123)
     @testset "d=$d, k=$k, L=$L" for d = 5:10:25, k = 1:3, L = 1:2
         n, v = nfull[1:L], vfull[1:L]
         F, Z = randn(rng, d, k), [randn(rng, k, nl) for nl in n]
-        Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
+        Yblock = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
 
-        Yflat = hcat(Y...)
-        Yblock = BlockArray(Yflat, [d], collect(n))
-
-        Yflatlist = collect(eachcol(Yflat))
+        Yflatlist = collect(eachcol(hcat(Yblock...)))
 
         F0 = randn(rng, d, k)
         iters = 4
@@ -32,13 +29,11 @@ rng = MersenneTwister(123)
             vref = Vector{Vector{eltype(F0)}}(undef,iters+1)
             Fref[1] = copy(F0)
             for t in 1:iters
-                _Ft = svd(Fref[t])
-                vref[t] = Reference.SAGE.updatev(_Ft,Yblock)
-                Fref[t+1] = Reference.SAGE.updateF(_Ft,vref[t],Yblock)
+                vref[t] = Reference.SAGE.updatev(Fref[t],Yblock)
+                Fref[t+1] = Reference.SAGE.updateF(Fref[t],vref[t],Yblock)
             end
             vref[end] = Reference.SAGE.updatev(Fref[end],Yblock)
             
-            vblock = [v[cumsum([1; collect(n[1:end-1])])] for v in vref]
             Fsvd = svd.(Fref)
             @testset "updateF! (ExpectationMaximization)" begin
                 for t in 2:length(Fref)
@@ -46,9 +41,9 @@ rng = MersenneTwister(123)
                         copy(Fsvd[t-1].U),
                         copy(Fsvd[t-1].S.^2),
                         copy(Fsvd[t-1].Vt),
-                        copy(vblock[t-1])
+                        copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updateF!(M,Y,HeteroscedasticPCA.ExpectationMaximization())
+                    HeteroscedasticPCA.updateF!(M,Yblock,HeteroscedasticPCA.ExpectationMaximization())
                     @test M.U ≈ Fsvd[t].U
                     @test M.λ ≈ Fsvd[t].S.^2
                     @test M.Vt ≈ Fsvd[t].Vt
@@ -60,10 +55,10 @@ rng = MersenneTwister(123)
                         copy(Fsvd[t].U),
                         copy(Fsvd[t].S.^2),
                         copy(Fsvd[t].Vt),
-                        copy(vblock[t-1])
+                        copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updatev!(M,Y,HeteroscedasticPCA.RootFinding())
-                    @test vcat(fill.(M.v,n)...) ≈ vref[t]
+                    HeteroscedasticPCA.updatev!(M,Yblock,HeteroscedasticPCA.RootFinding())
+                    @test M.v ≈ vref[t]
                 end
             end
         end
@@ -74,11 +69,10 @@ rng = MersenneTwister(123)
             vref = Vector{Vector{eltype(F0)}}(undef,iters+1)
             Fref[1] = copy(F0)
             for t in 1:iters
-                _Ft = svd(Fref[t])
-                vref[t] = Reference.SAGE.updatev(_Ft,Yflat)
-                Fref[t+1] = Reference.SAGE.updateF(_Ft,vref[t],Yflat)
+                vref[t] = Reference.SAGE.updatev(Fref[t],Yflatlist)
+                Fref[t+1] = Reference.SAGE.updateF(Fref[t],vref[t],Yflatlist)
             end
-            vref[end] = Reference.SAGE.updatev(Fref[end],Yflat)
+            vref[end] = Reference.SAGE.updatev(Fref[end],Yflatlist)
             
             Fsvd = svd.(Fref)
             @testset "updateF! (ExpectationMaximization)" begin
