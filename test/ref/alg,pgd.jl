@@ -13,26 +13,6 @@ using Polynomials: Poly, poly, roots
 using .PolynomialRatios
 using BlockArrays: AbstractBlockArray, eachblock
 
-# Algorithm
-function ppca(Y,k,iters,init)
-    U = Vector{typeof(init)}(undef,iters+1)
-    θ2 = Vector{Vector{eltype(init)}}(undef,iters+1)
-    v = Vector{Vector{eltype(init)}}(undef,iters+1)
-    Q,S,_ = svd(init)
-    U[1] = Q[:,1:k]
-    θ2[1] = S[1:k].^2
-    Ynorms = computeYcolnorms(Y)
-    for t in 1:iters
-        v[t] = updatev(U[t],θ2[t],Y)
-        θ2[t+1] = updateθ2(U[t],v[t],Y)
-        L = updateL(Ynorms,θ2[t+1],v[t])
-        U[t+1] = updateU(U[t],θ2[t+1],v[t],Y,1/L)
-    end
-    v[end] = updatev(U[end],θ2[end],Y)
-    return U, θ2, v
-end
-
-
 updateL(ynorms,θ2,σ2) = sum(
         ynorm^2*maximum([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2])
         for (ynorm,σℓ2) in zip(ynorms,σ2)
