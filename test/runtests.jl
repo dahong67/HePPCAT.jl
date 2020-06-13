@@ -125,9 +125,22 @@ rng = MersenneTwister(123)
         Yflatlist = collect(eachcol(Yflat))
 
         F0 = randn(rng, d, k)
+        iters = 4
 
         @testset "flat" begin
-            Uref, λref, vref = Reference.MM.ppca(Yflat, k, 4, F0)
+            Uref = Vector{typeof(F0)}(undef,iters+1)
+            λref = Vector{Vector{eltype(F0)}}(undef,iters+1)
+            vref = Vector{Vector{eltype(F0)}}(undef,iters+1)
+            Q,S,_ = svd(F0)
+            Uref[1] = Q[:,1:k]
+            λref[1] = S[1:k].^2
+            for t in 1:iters
+                vref[t] = Reference.MM.updatev(Uref[t],λref[t],Yflat)
+                λref[t+1] = Reference.MM.updateθ2(Uref[t],vref[t],Yflat)
+                Uref[t+1] = Reference.MM.updateU(Uref[t],λref[t+1],vref[t],Yflat)
+            end
+            vref[end] = Reference.MM.updatev(Uref[end],λref[end],Yflat)
+            
             VtI = Matrix{Float64}(I,k,k)
             @testset "updateλ! (RootFinding)" begin
                 for t in 2:length(λref)

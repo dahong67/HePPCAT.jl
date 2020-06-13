@@ -14,23 +14,6 @@ using .PolynomialRatios
 using BlockArrays: AbstractBlockArray, eachblock
 
 # Algorithm
-function ppca(Y,k,iters,init)
-    U = Vector{typeof(init)}(undef,iters+1)
-    θ2 = Vector{Vector{eltype(init)}}(undef,iters+1)
-    v = Vector{Vector{eltype(init)}}(undef,iters+1)
-    Q,S,_ = svd(init)
-    U[1] = Q[:,1:k]
-    θ2[1] = S[1:k].^2
-    for t in 1:iters
-        v[t] = updatev(U[t],θ2[t],Y)
-        θ2[t+1] = updateθ2(U[t],v[t],Y)
-        U[t+1] = updateU(U[t],θ2[t+1],v[t],Y)
-    end
-    v[end] = updatev(U[end],θ2[end],Y)
-    return U, θ2, v
-end
-
-
 function polar(A)
     U,_,V = svd(A)
     return U*V'
