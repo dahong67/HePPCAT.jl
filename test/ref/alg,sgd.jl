@@ -1,9 +1,3 @@
-# algorithms: sage
-
-# todo:
-# + block version for shared noise variances
-# + sometimes root-finding finds no solutions, figure out how to handle
-
 module SGD
 
 include("polyratio.jl")
@@ -12,17 +6,15 @@ using LinearAlgebra: svd, SVD, Diagonal, /, norm
 using LinearAlgebra
 using Polynomials: Poly, poly, roots
 using .PolynomialRatios
-using BlockArrays: AbstractBlockArray, eachblock
-using Printf
 
 function polar(A)
     U,_,V = svd(A)
     return U*V'
 end
 
-∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(eachcol(Y),v))
+∂h(U,θ2,v,Y) = sum(yi * yi' * U * Diagonal([θj2/σi2/(θj2+σi2) for θj2 in θ2]) for (yi,σi2) in zip(Y,v))
 
-_F(U,θ2,σ2,Y) = sum((yi' * U) * Diagonal([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2]) * (U'*yi) for (yi,σℓ2) in zip(eachcol(Y),σ2))
+_F(U,θ2,σ2,Y) = sum((yi' * U) * Diagonal([θj2/σℓ2/(θj2+σℓ2) for θj2 in θ2]) * (U'*yi) for (yi,σℓ2) in zip(Y,σ2))
 
 function updateU(U,θ2,v,Y,α,β,σ,max_line,t)
     d,k = size(U)
@@ -37,11 +29,9 @@ function updateU(U,θ2,v,Y,α,β,σ,max_line,t)
         η=β*η
         iter = iter + 1
         if(iter > max_line)
-            # println("Iter $t Exceeded maximum line search iterations. Accuracy not guaranteed.")
             break
         end
     end
-#     print(iter)
     return R(U,α*∇h,η)
 end
 
@@ -56,21 +46,12 @@ function R(U,∇h,η)
     return U*M + Q*N
 end
 
-updatev(U,θ2,Y) = [_updatevi(U,sqrt.(θ2),yi) for yi in eachcol(Y)]
+updatev(U,θ2,Y) = [_updatevi(U,sqrt.(θ2),yi) for yi in Y]
 function _updatevi(U,θ,yi)
 
     d, k = size(U)
 
     Uyi = U'yi
-    # Lip = -(d-k) // poly(zeros(1),:v) +
-    #     (norm(yi)^2-norm(Uyi)^2) // poly(zeros(2),:v) -
-    #     sum(1. // poly(fill(-θ[j]^2,1),:v) -
-    #         abs2(Uyi[j]) // poly(fill(-θ[j]^2,2),:v) for j in 1:k)
-    # currently, PolynomialRatios does not reduce to avoid losing roots
-    # so to help out we combine some terms in advance
-    # briefly tried BigFloats to see if roots wouldn't be lost but it didn't
-    # seem to resolve it. a cause appears to be norm(yi)^2-norm(Uyi)^2 ≈ 0
-    # leading to degree going down - todo: document
     Lip = Poly([(norm(yi)^2-norm(Uyi)^2),-(d-k)],:v) // poly(zeros(2),:v) -
         sum(Poly([θ[j]^2-abs2(Uyi[j]),1.],:v) // poly(fill(-θ[j]^2,2),:v) for j in 1:k)
 
@@ -86,35 +67,9 @@ function _updatevi(U,θ,yi)
     return posroots[optroot]
 end
 
-# updatev(F::SVD,Y::AbstractBlockArray) =
-#     vcat([fill(_updatevl(F,Yl),size(Yl,2)) for Yl in eachblock(Y)]...)
-# function _updatevl(F::SVD,Yl)
-#     U, θ, _ = F
-#     d, k = size(F)
-#     nl = size(Yl,2)
-#
-#     UYl = U'Yl
-#     Lip = Poly([(norm(Yl)^2-norm(UYl)^2),-nl*(d-k)],:v) // poly(zeros(2),:v) -
-#         sum(Poly([nl*θ[j]^2-sum(abs2,UYl[j,:]),nl],:v) // poly(fill(-θ[j]^2,2),:v) for j in 1:k)
-#
-#     allroots = roots(numerator(Lip))
-#     posroots = real.(filter(x -> real(x) ≈ x && real(x) > zero(real(x)),allroots))
-#
-#     optroot = argmax([
-#         -nl*(d-k)*log(v) -
-#         (norm(Yl)^2 - norm(UYl)^2)/v -
-#         sum(nl*log(θ[j]^2+v) + sum(abs2,UYl[j,:])/(θ[j]^2+v) for j in 1:k)
-#         for v in posroots])
-#
-#     return posroots[optroot]
-# end
-#
-# end
-
-
 updateθ2(U,v,Y) = [_updateθ2l(uj,v,Y) for uj in eachcol(U)]
 function _updateθ2l(uj,v,Y)
-    c = [(uj'*yi)^2 for yi in eachcol(Y)]
+    c = [(uj'*yi)^2 for yi in Y]
      _fmin(1/size(Y,2) * ones(length(c)),c,v)
  end
 

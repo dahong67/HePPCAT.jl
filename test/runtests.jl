@@ -257,9 +257,7 @@ rng = MersenneTwister(123)
         n, v = nfull[1:L], vfull[1:L]
         F, Z = randn(rng, d, k), [randn(rng, k, nl) for nl in n]
         Y = [F * Zl + sqrt(vl) * randn(rng, d, nl) for (Zl, vl, nl) in zip(Z, v, n)]
-
-        Yflat = hcat(Y...)
-        Yflatlist = collect(eachcol(Yflat))
+        Yflatlist = collect(eachcol(hcat(Y...)))
 
         F0 = randn(rng, d, k)
         iters = 4
@@ -277,11 +275,11 @@ rng = MersenneTwister(123)
             λref[1] = S[1:k].^2
 
             for t in 1:iters
-                vref[t] = Reference.SGD.updatev(Uref[t],λref[t],Yflat)
-                λref[t+1] = Reference.SGD.updateθ2(Uref[t],vref[t],Yflat)
-                Uref[t+1] = Reference.SGD.updateU(Uref[t],λref[t+1],vref[t],Yflat,α,β,σ,max_line,t)
+                vref[t] = Reference.SGD.updatev(Uref[t],λref[t],Yflatlist)
+                λref[t+1] = Reference.SGD.updateθ2(Uref[t],vref[t],Yflatlist)
+                Uref[t+1] = Reference.SGD.updateU(Uref[t],λref[t+1],vref[t],Yflatlist,α,β,σ,max_line,t)
             end
-            vref[end] = Reference.SGD.updatev(Uref[end],λref[end],Yflat)
+            vref[end] = Reference.SGD.updatev(Uref[end],λref[end],Yflatlist)
             
             VtI = Matrix{Float64}(I,k,k)
             @testset "updateλ! (RootFinding)" begin
