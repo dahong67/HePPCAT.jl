@@ -8,9 +8,9 @@ using Logging: @debug
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
 # argmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L830
 # part of pull request https://github.com/JuliaLang/julia/pull/35316
-Base.findmax(f, domain) = mapfoldl(x -> (f(x), x), _rf_findmax, domain)
+_findmax(f, domain) = mapfoldl(x -> (f(x), x), _rf_findmax, domain)
 _rf_findmax((fm, m), (fx, x)) = isless(fm, fx) ? (fx, x) : (fm, m)
-Base.argmax(f, domain) = findmax(f, domain)[2]
+_argmax(f, domain) = _findmax(f, domain)[2]
 
 # Types
 struct HPPCA{T<:AbstractFloat}
@@ -127,7 +127,7 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
     length(vcritical) == 1 && return mid(interval(only(vcritical)))
 
     # Return maximizer
-    return argmax(mid.(interval.(vcritical))) do v
+    return _argmax(mid.(interval.(vcritical))) do v
         -(α0*log(v)+β0/v + sum(log(λ[j]+v) + β[j]/(λ[j]+v) for j in 1:k))
     end
 end
@@ -194,7 +194,7 @@ function updateλj(λj,uj,v,Y,::RootFinding)
     length(λcritical) == 1 && return mid(interval(only(λcritical)))
 
     # Return maximizer
-    return argmax(mid.(interval.(λcritical))) do λ
+    return _argmax(mid.(interval.(λcritical))) do λ
         -sum(n[l]*log(λ+v[l]) + β[l]/(λ+v[l]) for l in 1:L)
     end
 end
