@@ -1,5 +1,4 @@
 [deps]
-BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 IntervalArithmetic = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
 IntervalRootFinding = "d2bf35a9-74e0-55ec-b149-d360ff49b807"
@@ -12,7 +11,6 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-BlockArrays = "= 0.11.2"
 Distributions = "= 0.23.2"
 IntervalArithmetic = "= 0.16.2"
 IntervalRootFinding = "= 0.4.0"

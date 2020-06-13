@@ -8,7 +8,7 @@ include("ref/alg,pgd.jl")
 include("ref/alg,sgd.jl")
 end
 
-using Random, LinearAlgebra, BlockArrays
+using Random, LinearAlgebra
 using Logging
 
 rng = MersenneTwister(123)
