@@ -25,9 +25,19 @@ rng = MersenneTwister(123)
         Yflatlist = collect(eachcol(Yflat))
 
         F0 = randn(rng, d, k)
+        iters = 4
 
         @testset "block" begin
-            Fref, vref = Reference.SAGE.ppca(Yblock, k, 4, F0)
+            Fref = Vector{typeof(F0)}(undef,iters+1)
+            vref = Vector{Vector{eltype(F0)}}(undef,iters+1)
+            Fref[1] = copy(F0)
+            for t in 1:iters
+                _Ft = svd(Fref[t])
+                vref[t] = Reference.SAGE.updatev(_Ft,Yblock)
+                Fref[t+1] = Reference.SAGE.updateF(_Ft,vref[t],Yblock)
+            end
+            vref[end] = Reference.SAGE.updatev(Fref[end],Yblock)
+            
             vblock = [v[cumsum([1; collect(n[1:end-1])])] for v in vref]
             Fsvd = svd.(Fref)
             @testset "updateF! (ExpectationMaximization)" begin
@@ -60,7 +70,16 @@ rng = MersenneTwister(123)
 
         # updateF! seems to disagree at latter iterations
         @testset "flat" begin
-            Fref, vref = Reference.SAGE.ppca(Yflat, k, 4, F0)
+            Fref = Vector{typeof(F0)}(undef,iters+1)
+            vref = Vector{Vector{eltype(F0)}}(undef,iters+1)
+            Fref[1] = copy(F0)
+            for t in 1:iters
+                _Ft = svd(Fref[t])
+                vref[t] = Reference.SAGE.updatev(_Ft,Yflat)
+                Fref[t+1] = Reference.SAGE.updateF(_Ft,vref[t],Yflat)
+            end
+            vref[end] = Reference.SAGE.updatev(Fref[end],Yflat)
+            
             Fsvd = svd.(Fref)
             @testset "updateF! (ExpectationMaximization)" begin
                 for t in 2:length(Fref)

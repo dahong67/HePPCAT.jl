@@ -17,21 +17,6 @@ using Polynomials: Poly, poly
 using .PolynomialRatios
 using .Utils: posroots
 
-# Algorithm
-function ppca(Y,k,iters,init)
-    F = Vector{typeof(init)}(undef,iters+1)
-    v = Vector{Vector{eltype(init)}}(undef,iters+1)
-    F[1] = copy(init)
-    for t in 1:iters
-        _Ft = svd(F[t])
-        v[t] = updatev(_Ft,Y)
-        F[t+1] = updateF(_Ft,v[t],Y)
-    end
-    v[end] = updatev(F[end],Y)
-
-    return F, v
-end
-
 # Updates
 updateF(F,v,Y) = updateF(svd(F),v,Y)
 updateF(F::SVD,v,Y::BlockArray) = updateF(F,v,Matrix(Y))
