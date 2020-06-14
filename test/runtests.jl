@@ -5,7 +5,6 @@ using LinearAlgebra, Random, Test
 using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, MinorizeMaximize,
     ProjectedGradientAscent, RootFinding, StiefelGradientAscent
-using HeteroscedasticPCA: ConstantStep
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
 
 # Load reference implementations
@@ -63,19 +62,12 @@ n, v = (40, 10), (4, 1)
             Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,MinorizeMaximize())
             @test Ur ≈ Mf.U
         end
-        @testset "updateU! (ProjectedGradientAscent, $stepsize): t=$t" for stepsize in [0.0,0.5,Inf], t in 1:T
-            Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yb,stepsize)
-            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(ConstantStep(stepsize)))
-            @test Ur ≈ Mb.U
-            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(ConstantStep(stepsize)))
-            @test Ur ≈ Mf.U
-        end
-        @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
+        @testset "updateU! (ProjectedGradientAscent): t=$t" for t in 1:T
             Lip = sum(norm(Yl)^2*maximum(λj/vl/(λj+vl) for λj in MM[t].λ) for (Yl,vl) in zip(Yb,MM[t].v))
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yb,1/Lip)
-            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(ConstantStep(1/Lip)))
+            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(1/Lip))
             @test Ur ≈ Mb.U
-            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(ConstantStep(1/Lip)))
+            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(1/Lip))
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
@@ -147,15 +139,10 @@ n, v = (40, 10), (4, 1)
             Mf = updateU!(deepcopy(MM[t]),Yf,MinorizeMaximize())
             @test Ur ≈ Mf.U
         end
-        @testset "updateU! (ProjectedGradientAscent, $stepsize): t=$t" for stepsize in [0.0,0.5,Inf], t in 1:T
-            Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yf,stepsize)
-            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(ConstantStep(stepsize)))
-            @test Ur ≈ Mf.U
-        end
-        @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
+        @testset "updateU! (ProjectedGradientAscent): t=$t" for t in 1:T
             Lip = sum(norm(Yl)^2*maximum(λj/vl/(λj+vl) for λj in MM[t].λ) for (Yl,vl) in zip(Yf,MM[t].v))
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yf,1/Lip)
-            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(ConstantStep(1/Lip)))
+            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(1/Lip))
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
