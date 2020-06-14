@@ -136,7 +136,7 @@ end
 gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in zip(Y,v))
 F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in zip(Y,v))
 
-updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)))
+updateU_mm(U,λ,v,Y) = polar(gradF(U,λ,v,Y))
 function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
     pga.stepsize == Inf && return M.U .= polar(gradF(M.U,M.λ,M.v,Y))
     M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
@@ -168,12 +168,8 @@ function geodesic(U,X,t)
 end
 
 # Updates: λ
-function updateλ!(M::HPPCA,Y,method)
-    for (j,uj) in enumerate(eachcol(M.U))
-        M.λ[j] = updateλj(M.λ[j],uj,M.v,Y,method)
-    end
-end
-function updateλj(λj,uj,v,Y,::RootFinding)
+updateλ_roots(U,v,Y) = [updateλj_roots(uj,v,Y) for uj in eachcol(U)]
+function updateλj_roots(uj,v,Y)
     n, L = size.(Y,2), length(Y)
 
     # Compute coefficients and root bounds
