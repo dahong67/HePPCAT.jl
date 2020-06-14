@@ -2,7 +2,6 @@ using HeteroscedasticPCA
 using Test
 
 module Reference
-include("ref/alg,pgd.jl")
 include("ref/alg,sgd.jl")
 end
 
@@ -199,14 +198,14 @@ rng = MersenneTwister(123)
             Q,S,_ = svd(F0)
             Uref[1] = Q[:,1:k]
             λref[1] = S[1:k].^2
-            Ynorms = Reference.PGD.computeYcolnorms(Yflatlist)
+            Ynorms = norm.(Yflatlist)
             for t in 1:iters
-                vref[t] = Reference.PGD.updatev(Uref[t],λref[t],Yflatlist)
-                λref[t+1] = Reference.PGD.updateθ2(Uref[t],vref[t],Yflatlist)
-                L = Reference.PGD.updateL(Ynorms,λref[t+1],vref[t])
-                Uref[t+1] = Reference.PGD.updateU(Uref[t],λref[t+1],vref[t],Yflatlist,1/L)
+                vref[t] = Ref.updatev_roots(Uref[t],λref[t],Yflatlist)
+                λref[t+1] = Ref.updateλ_roots(Uref[t],vref[t],Yflatlist)
+                L = sum(ynorm^2*maximum([λj/vi/(λj+vi) for λj in λref[t+1]]) for (ynorm,vi) in zip(Ynorms,vref[t]))
+                Uref[t+1] = Ref.updateU_pga(Uref[t],λref[t+1],vref[t],Yflatlist,1/L)
             end
-            vref[end] = Reference.PGD.updatev(Uref[end],λref[end],Yflatlist)
+            vref[end] = Ref.updatev_roots(Uref[end],λref[end],Yflatlist)
             
             VtI = Matrix{Float64}(I,k,k)
             @testset "updateλ! (RootFinding)" begin

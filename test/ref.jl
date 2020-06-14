@@ -137,10 +137,7 @@ gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in z
 F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in zip(Y,v))
 
 updateU_mm(U,λ,v,Y) = polar(gradF(U,λ,v,Y))
-function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
-    pga.stepsize == Inf && return M.U .= polar(gradF(M.U,M.λ,M.v,Y))
-    M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
-end
+updateU_pga(U,λ,v,Y,α) = α == Inf ? polar(gradF(U,λ,v,Y)) : polar(U + α*gradF(U,λ,v,Y))
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
     dFdU = gradF(M.U,M.λ,M.v,Y)
     ∇F = dFdU - M.U*(dFdU'M.U)
