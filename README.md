@@ -21,7 +21,7 @@
   + [x] New global maximization ideas for `v` and `θ` updates
   + [x] ~~Use `geodesic` method from `Manifolds.jl`~~ (`Manifolds.jl` appears to have the "embedded geodesic" whereas we are using the one from the "canonical metric" discussed in `edelman1998tgo`)
 + [ ] Further enhancements
-  + [ ] Give updates meaningful return values
+  + [x] Give updates meaningful return values
   + [ ] Add all methods from paper
   + [ ] Add tests to cover more cases (e.g., blocks vs. flat)
   + [ ] Make reference implementations for tests simple / easily checkable

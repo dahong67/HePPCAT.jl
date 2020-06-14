@@ -100,6 +100,7 @@ function updateF!(M::HPPCA,Y,::ExpectationMaximization)
     M.U .= F.U
     M.λ .= F.S.^2
     M.Vt .= F.Vt
+    return M
 end
 
 # Updates: v
@@ -107,6 +108,7 @@ function updatev!(M::HPPCA,Y,method)
     for (l,Yl) in enumerate(Y)
         M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
     end
+    return M
 end
 function updatevl(vl,U,λ,Yl,::RootFinding)
     d, k = size(U)
@@ -140,10 +142,11 @@ end
 gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in zip(Y,v))
 F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in zip(Y,v))
 
-updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)))
+updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)); M)
 function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
     pga.stepsize == Inf && return M.U .= polar(gradF(M.U,M.λ,M.v,Y))
     M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
+    return M
 end
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
     dFdU = gradF(M.U,M.λ,M.v,Y)
@@ -152,11 +155,15 @@ function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
     F0, FΔ = F(M.U,M.λ,M.v,Y), sga.tol * norm(∇F)^2
     for m in 1:sga.maxsearches
         Δ = sga.stepsize * sga.contraction^(m-1)
-        (F(geodesic(M.U,∇F,Δ),M.λ,M.v,Y) >= F0 + Δ * FΔ) && return M.U .= geodesic(M.U,∇F,Δ)
+        if F(geodesic(M.U,∇F,Δ),M.λ,M.v,Y) >= F0 + Δ * FΔ
+            M.U .= geodesic(M.U,∇F,Δ)
+            return M
+        end
     end
     @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."
     Δ = sga.stepsize * sga.contraction^sga.maxsearches
-    return M.U .= geodesic(M.U,∇F,Δ)
+    M.U .= geodesic(M.U,∇F,Δ)
+    return M
 end
 skew(A) = (A'-A)/2
 function geodesic(U,X,t)
@@ -176,6 +183,7 @@ function updateλ!(M::HPPCA,Y,method)
     for (j,uj) in enumerate(eachcol(M.U))
         M.λ[j] = updateλj(M.λ[j],uj,M.v,Y,method)
     end
+    return M
 end
 function updateλj(λj,uj,v,Y,::RootFinding)
     n, L = size.(Y,2), length(Y)
