@@ -1,10 +1,6 @@
 using HeteroscedasticPCA
 using Test
 
-module Reference
-include("ref/alg,sgd.jl")
-end
-
 include("ref.jl")
 
 using Random, LinearAlgebra
@@ -278,11 +274,11 @@ rng = MersenneTwister(123)
             λref[1] = S[1:k].^2
 
             for t in 1:iters
-                vref[t] = Reference.SGD.updatev(Uref[t],λref[t],Yflatlist)
-                λref[t+1] = Reference.SGD.updateθ2(Uref[t],vref[t],Yflatlist)
-                Uref[t+1] = Reference.SGD.updateU(Uref[t],λref[t+1],vref[t],Yflatlist,α,β,σ,max_line,t)
+                vref[t] = Ref.updatev_roots(Uref[t],λref[t],Yflatlist)
+                λref[t+1] = Ref.updateλ_roots(Uref[t],vref[t],Yflatlist)
+                Uref[t+1] = Ref.updateU_sga(Uref[t],λref[t+1],vref[t],Yflatlist,max_line,α,β,σ)
             end
-            vref[end] = Reference.SGD.updatev(Uref[end],λref[end],Yflatlist)
+            vref[end] = Ref.updatev_roots(Uref[end],λref[end],Yflatlist)
             
             VtI = Matrix{Float64}(I,k,k)
             @testset "updateλ! (RootFinding)" begin

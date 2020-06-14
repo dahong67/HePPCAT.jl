@@ -138,18 +138,18 @@ F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in 
 
 updateU_mm(U,λ,v,Y) = polar(gradF(U,λ,v,Y))
 updateU_pga(U,λ,v,Y,α) = α == Inf ? polar(gradF(U,λ,v,Y)) : polar(U + α*gradF(U,λ,v,Y))
-function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
-    dFdU = gradF(M.U,M.λ,M.v,Y)
-    ∇F = dFdU - M.U*(dFdU'M.U)
-
-    F0, FΔ = F(M.U,M.λ,M.v,Y), sga.tol * norm(∇F)^2
-    for m in 1:sga.maxsearches
-        Δ = sga.stepsize * sga.contraction^(m-1)
-        (F(geodesic(M.U,∇F,Δ),M.λ,M.v,Y) >= F0 + Δ * FΔ) && return M.U .= geodesic(M.U,∇F,Δ)
+function updateU_sga(U,λ,v,Y,maxsearches,stepsize,contraction,tol)
+    dFdU = gradF(U,λ,v,Y)
+    ∇F = dFdU - U*(dFdU'U)
+    
+    F0, FΔ = F(U,λ,v,Y), tol * norm(∇F)^2
+    for m in 1:maxsearches
+        Δ = stepsize * contraction^(m-1)
+        (F(geodesic(U,∇F,Δ),λ,v,Y) >= F0 + Δ * FΔ) && return geodesic(U,∇F,Δ)
     end
     @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."
-    Δ = sga.stepsize * sga.contraction^sga.maxsearches
-    return M.U .= geodesic(M.U,∇F,Δ)
+    Δ = stepsize * contraction^maxsearches
+    return geodesic(U,∇F,Δ)
 end
 skew(A) = (A'-A)/2
 function geodesic(U,X,t)
