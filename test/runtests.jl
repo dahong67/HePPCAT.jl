@@ -2,11 +2,12 @@ using HeteroscedasticPCA
 using Test
 
 module Reference
-include("ref/alg,sage.jl")
 include("ref/alg,mm.jl")
 include("ref/alg,pgd.jl")
 include("ref/alg,sgd.jl")
 end
+
+include("ref.jl")
 
 using Random, LinearAlgebra
 using Logging
@@ -29,10 +30,12 @@ rng = MersenneTwister(123)
             vref = Vector{Vector{eltype(F0)}}(undef,iters+1)
             Fref[1] = copy(F0)
             for t in 1:iters
-                vref[t] = Reference.SAGE.updatev(Fref[t],Yblock)
-                Fref[t+1] = Reference.SAGE.updateF(Fref[t],vref[t],Yblock)
+                U, θ, _ = svd(Fref[t])
+                vref[t] = Ref.updatev_roots(U,θ.^2,Yblock)
+                Fref[t+1] = Ref.updateF_em(Fref[t],vref[t],Yblock)
             end
-            vref[end] = Reference.SAGE.updatev(Fref[end],Yblock)
+            U, θ, _ = svd(Fref[end])
+            vref[end] = Ref.updatev_roots(U,θ.^2,Yblock)
             
             Fsvd = svd.(Fref)
             @testset "updateF! (ExpectationMaximization)" begin
@@ -69,10 +72,12 @@ rng = MersenneTwister(123)
             vref = Vector{Vector{eltype(F0)}}(undef,iters+1)
             Fref[1] = copy(F0)
             for t in 1:iters
-                vref[t] = Reference.SAGE.updatev(Fref[t],Yflatlist)
-                Fref[t+1] = Reference.SAGE.updateF(Fref[t],vref[t],Yflatlist)
+                U, θ, _ = svd(Fref[t])
+                vref[t] = Ref.updatev_roots(U,θ.^2,Yflatlist)
+                Fref[t+1] = Ref.updateF_em(Fref[t],vref[t],Yflatlist)
             end
-            vref[end] = Reference.SAGE.updatev(Fref[end],Yflatlist)
+            U, θ, _ = svd(Fref[end])
+            vref[end] = Ref.updatev_roots(U,θ.^2,Yflatlist)
             
             Fsvd = svd.(Fref)
             @testset "updateF! (ExpectationMaximization)" begin

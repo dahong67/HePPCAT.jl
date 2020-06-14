@@ -88,27 +88,23 @@ function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
 end
 
 # Updates: F
-function updateF!(M::HPPCA,Y,::ExpectationMaximization)
+function updateF_em(F,v,Y)
     n, L = size.(Y,2), length(Y)
-    Λ = Diagonal(M.λ)
-    Γ = [inv(Λ + M.v[l]*I) for l in 1:L]
-    Z = [Γ[l]*sqrt(Λ)*M.U'*Y[l] for l in 1:L]
-    num = sum(Y[l]*Z[l]'/M.v[l] for l in 1:L)
-    den = sum(Z[l]*Z[l]'/M.v[l] + n[l]*Γ[l] for l in 1:L)
+    U, θ, V = svd(F)
+    λ = θ.^2
+    
+    Λ = Diagonal(λ)
+    Γ = [inv(Λ + v[l]*I) for l in 1:L]
+    Z = [Γ[l]*sqrt(Λ)*U'*Y[l] for l in 1:L]
+    num = sum(Y[l]*Z[l]'/v[l] for l in 1:L)
+    den = sum(Z[l]*Z[l]'/v[l] + n[l]*Γ[l] for l in 1:L)
 
-    F = svd((num / den) * M.Vt)
-    M.U .= F.U
-    M.λ .= F.S.^2
-    M.Vt .= F.Vt
+    return (num / den) * V'
 end
 
 # Updates: v
-function updatev!(M::HPPCA,Y,method)
-    for (l,Yl) in enumerate(Y)
-        M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
-    end
-end
-function updatevl(vl,U,λ,Yl,::RootFinding)
+updatev_roots(U,λ,Y) = [updatevl_roots(U,λ,Yl) for Yl in Y]
+function updatevl_roots(U,λ,Yl)
     d, k = size(U)
     nl = size(Yl,2)
 
