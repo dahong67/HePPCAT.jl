@@ -2,7 +2,7 @@ module HeteroscedasticPCA
 
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
-using LinearAlgebra: Diagonal, I, norm, qr, svd, tr, /
+using LinearAlgebra: Diagonal, I, norm, qr, svd, /
 using Logging: @debug
 
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
