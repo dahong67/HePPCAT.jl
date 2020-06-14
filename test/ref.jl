@@ -12,6 +12,17 @@ _findmax(f, domain) = mapfoldl(x -> (f(x), x), _rf_findmax, domain)
 _rf_findmax((fm, m), (fx, x)) = isless(fm, fx) ? (fx, x) : (fm, m)
 _argmax(f, domain) = _findmax(f, domain)[2]
 
+# log-likelihood (todo: add constant)
+function loglikelihood(U,λ,v,Y)
+    d, k = size(U)
+    n, L = size.(Y,2), length(Y)
+    return 1/2*sum(
+        -n[l]*sum(log.(λ .+ v[l])) - n[l]*(d-k)*log(v[l]) - norm(Y[l])^2/v[l]
+        + norm(sqrt(Diagonal((λ./v[l])./(λ .+ v[l])))*U'Y[l])^2
+        for l = 1:L
+    )
+end
+
 # v updates
 updatev_roots(U,λ,Y) = [updatevl_roots(U,λ,Yl) for Yl in Y]
 function updatevl_roots(U,λ,Yl)

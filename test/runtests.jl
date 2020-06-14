@@ -5,7 +5,7 @@ using LinearAlgebra, Random, Test
 using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, MinorizeMaximize,
     ProjectedGradientAscent, RootFinding, StiefelGradientAscent
-using HeteroscedasticPCA: LipBoundU
+using HeteroscedasticPCA: LipBoundU, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
 
 # Load reference implementations
@@ -120,6 +120,16 @@ n, v = (40, 10), (4, 1)
             Lipf = LipBoundU(flatten(MM[t],n[1:L]),norm.(Yf))
             @test Lipr ≈ Lipf
         end
+        
+        # Test log-likelihood
+        @testset "loglikelihood: t=$t" for t in 1:T
+            vf = vcat(fill.(MM[t].v,n[1:L])...)
+            LLr = Ref.loglikelihood(MM[t].U,MM[t].λ,vf,Yf)
+            LLb = loglikelihood(MM[t],Yb)
+            @test LLr ≈ LLb
+            LLf = loglikelihood(flatten(MM[t],n[1:L]),Yf)
+            @test LLr ≈ LLf
+        end
     end
     
     @testset "flat calls" begin
@@ -197,6 +207,13 @@ n, v = (40, 10), (4, 1)
             Lipr = Ref.LipBoundU(MM[t].λ,MM[t].v,Yf)
             Lipf = LipBoundU(MM[t],norm.(Yf))
             @test Lipr ≈ Lipf
+        end
+        
+        # Test log-likelihood
+        @testset "loglikelihood: t=$t" for t in 1:T
+            LLr = Ref.loglikelihood(MM[t].U,MM[t].λ,MM[t].v,Yf)
+            LLf = loglikelihood(MM[t],Yf)
+            @test LLr ≈ LLf
         end
     end
 end
