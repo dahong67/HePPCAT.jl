@@ -147,6 +147,10 @@ function polar(A)
 end
 gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in zip(Y,v))
 F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in zip(Y,v))
+function LipBoundU(M::HPPCA,Ynorm)
+    L, λmax = length(M.v), maximum(M.λ)
+    return sum(Ynorm[l]^2*λmax/M.v[l]/(λmax+M.v[l]) for l in 1:L)
+end
 
 updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)); M)
 function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)

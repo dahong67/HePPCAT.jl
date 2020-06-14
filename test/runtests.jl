@@ -5,6 +5,7 @@ using LinearAlgebra, Random, Test
 using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, MinorizeMaximize,
     ProjectedGradientAscent, RootFinding, StiefelGradientAscent
+using HeteroscedasticPCA: LipBoundU
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
 
 # Load reference implementations
@@ -70,11 +71,11 @@ n, v = (40, 10), (4, 1)
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
-            Lip = sum(norm(Yl)^2*maximum(λj/vl/(λj+vl) for λj in MM[t].λ) for (Yl,vl) in zip(Yb,MM[t].v))
+            Lip = Ref.LipBoundU(MM[t].λ,MM[t].v,Yb)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yb,1/Lip)
-            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(1/Lip))
+            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(1/LipBoundU(MM[t],norm.(Yb))))
             @test Ur ≈ Mb.U
-            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(1/Lip))
+            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(1/LipBoundU(flatten(MM[t],n[1:L]),norm.(Yf))))
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
@@ -108,6 +109,16 @@ n, v = (40, 10), (4, 1)
             @test Gr ≈ Gb
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,vf,Yf)
             @test Gr ≈ Gf
+        end
+        
+        # Test Lipschitz bound w.r.t U
+        @testset "LipBoundU: t=$t" for t in 1:T
+            vf = vcat(fill.(MM[t].v,n[1:L])...)
+            Lipr = Ref.LipBoundU(MM[t].λ,vf,Yf)
+            Lipb = LipBoundU(MM[t],norm.(Yb))
+            @test Lipr ≈ Lipb
+            Lipf = LipBoundU(flatten(MM[t],n[1:L]),norm.(Yf))
+            @test Lipr ≈ Lipf
         end
     end
     
@@ -152,9 +163,9 @@ n, v = (40, 10), (4, 1)
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
-            Lip = sum(norm(Yl)^2*maximum(λj/vl/(λj+vl) for λj in MM[t].λ) for (Yl,vl) in zip(Yf,MM[t].v))
+            Lip = Ref.LipBoundU(MM[t].λ,MM[t].v,Yf)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yf,1/Lip)
-            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(1/Lip))
+            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(1/LipBoundU(MM[t],norm.(Yf))))
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
@@ -179,6 +190,13 @@ n, v = (40, 10), (4, 1)
             Gr = Ref.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
             @test Gr ≈ Gf
+        end
+        
+        # Test Lipschitz bound w.r.t U
+        @testset "LipBoundU: t=$t" for t in 1:T
+            Lipr = Ref.LipBoundU(MM[t].λ,MM[t].v,Yf)
+            Lipf = LipBoundU(MM[t],norm.(Yf))
+            @test Lipr ≈ Lipf
         end
     end
 end

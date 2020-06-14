@@ -65,6 +65,10 @@ function polar(A)
 end
 gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in zip(Y,v))
 F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in zip(Y,v))
+function LipBoundU(λ,v,Y)
+    L, λmax = length(v), maximum(λ)
+    return sum(norm(Y[l])^2*λmax/v[l]/(λmax+v[l]) for l in 1:L)
+end
 
 updateU_mm(U,λ,v,Y) = polar(gradF(U,λ,v,Y))
 updateU_pga(U,λ,v,Y,α) = α == Inf ? polar(gradF(U,λ,v,Y)) : polar(U + α*gradF(U,λ,v,Y))
