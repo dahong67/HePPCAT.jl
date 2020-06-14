@@ -124,7 +124,7 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
         β0/v^2-α0/v + sum(β[j]/(λ[j]+v)^2 - 1/(λ[j]+v) for j in 1:k)
     end
     isempty(vcritical) && return vmin
-    length(vcritical) == 1 && return mid(interval(only(vcritical)))
+    length(vcritical) == 1 && return mid(interval(first(vcritical)))
 
     # Return maximizer
     return _argmax(mid.(interval.(vcritical))) do v
@@ -191,7 +191,7 @@ function updateλj(λj,uj,v,Y,::RootFinding)
         sum(β[l]/(λ+v[l])^2 - n[l]/(λ+v[l]) for l in 1:L)
     end
     isempty(λcritical) && return λmin
-    length(λcritical) == 1 && return mid(interval(only(λcritical)))
+    length(λcritical) == 1 && return mid(interval(first(λcritical)))
 
     # Return maximizer
     return _argmax(mid.(interval.(λcritical))) do λ
