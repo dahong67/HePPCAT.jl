@@ -37,6 +37,11 @@ function updatevl_roots(U,λ,Yl)
         -(α0*log(v)+β0/v + sum(log(λ[j]+v) + β[j]/(λ[j]+v) for j in 1:k))
     end
 end
+function updatev_em(U,λ,v,Y)
+    d, k = size(U)
+    n, L = size.(Y,2), length(Y)
+    return [(norm(Y[l] - U*Diagonal(λ./(λ.+v[l]))*U'*Y[l])^2 + v[l]*n[l]*sum(λ./(λ.+v[l])))/(d*n[l]) for l in 1:L]
+end
 
 # F updates
 function updateF_em(F,v,Y)

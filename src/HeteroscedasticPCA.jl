@@ -117,6 +117,12 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
         -(α0*log(v)+β0/v + sum(log(λ[j]+v) + β[j]/(λ[j]+v) for j in 1:k))
     end
 end
+function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
+    d, k = size(U)
+    nl = size(Yl,2)
+
+    return (norm(Yl - U*Diagonal(λ./(λ.+vl))*U'*Yl)^2 + vl*nl*sum(λ./(λ.+vl)))/(d*nl)
+end
 
 # F updates
 function updateF!(M::HPPCA,Y,::ExpectationMaximization)

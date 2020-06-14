@@ -39,6 +39,11 @@ n, v = (40, 10), (4, 1)
             Mb = updatev!(deepcopy(MM[t]),Yb,RootFinding())
             @test vr ≈ Mb.v
         end
+        @testset "updatev! (ExpectationMaximization): t=$t" for t in 1:T
+            vr = Ref.updatev_em(MM[t].U,MM[t].λ,MM[t].v,Yb)
+            Mb = updatev!(deepcopy(MM[t]),Yb,ExpectationMaximization())
+            @test vr ≈ Mb.v
+        end
         
         # Test F updates
         @testset "updateF! (ExpectationMaximization): t=$t" for t in 1:T
@@ -113,6 +118,11 @@ n, v = (40, 10), (4, 1)
         @testset "updatev! (RootFinding): t=$t" for t in 1:T
             vr = Ref.updatev_roots(MM[t].U,MM[t].λ,Yf)
             Mf = updatev!(deepcopy(MM[t]),Yf,RootFinding())
+            @test vr ≈ Mf.v
+        end
+        @testset "updatev! (ExpectationMaximization): t=$t" for t in 1:T
+            vr = Ref.updatev_em(MM[t].U,MM[t].λ,MM[t].v,Yf)
+            Mf = updatev!(deepcopy(MM[t]),Yf,ExpectationMaximization())
             @test vr ≈ Mf.v
         end
         
