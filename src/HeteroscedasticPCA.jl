@@ -150,8 +150,11 @@ F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in 
 
 updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)); M)
 function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
-    pga.stepsize == Inf && return M.U .= polar(gradF(M.U,M.λ,M.v,Y))
-    M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
+    if pga.stepsize == Inf
+        M.U .= polar(gradF(M.U,M.λ,M.v,Y))
+    else
+        M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
+    end
     return M
 end
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
