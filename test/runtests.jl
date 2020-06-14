@@ -1,10 +1,14 @@
 using HeteroscedasticPCA
-using Test
+using LinearAlgebra, Random, Test
 
+# Relevant functions
+using HeteroscedasticPCA: HPPCA
+using HeteroscedasticPCA: ExpectationMaximization, MinorizeMaximize,
+    ProjectedGradientAscent, RootFinding, StiefelGradientAscent
+using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
+
+# Load reference implementations
 include("ref.jl")
-
-using Random, LinearAlgebra
-using Logging
 
 rng = MersenneTwister(123)
 @testset "alg,sage.jl" begin
@@ -34,13 +38,13 @@ rng = MersenneTwister(123)
             Fsvd = svd.(Fref)
             @testset "updateF! (ExpectationMaximization)" begin
                 for t in 2:length(Fref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Fsvd[t-1].U),
                         copy(Fsvd[t-1].S.^2),
                         copy(Fsvd[t-1].Vt),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updateF!(M,Yblock,HeteroscedasticPCA.ExpectationMaximization())
+                    updateF!(M,Yblock,ExpectationMaximization())
                     @test M.U ≈ Fsvd[t].U
                     @test M.λ ≈ Fsvd[t].S.^2
                     @test M.Vt ≈ Fsvd[t].Vt
@@ -48,13 +52,13 @@ rng = MersenneTwister(123)
             end
             @testset "updatev! (RootFinding)" begin
                 for t in 2:length(vref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Fsvd[t].U),
                         copy(Fsvd[t].S.^2),
                         copy(Fsvd[t].Vt),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updatev!(M,Yblock,HeteroscedasticPCA.RootFinding())
+                    updatev!(M,Yblock,RootFinding())
                     @test M.v ≈ vref[t]
                 end
             end
@@ -76,13 +80,13 @@ rng = MersenneTwister(123)
             Fsvd = svd.(Fref)
             @testset "updateF! (ExpectationMaximization)" begin
                 for t in 2:length(Fref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Fsvd[t-1].U),
                         copy(Fsvd[t-1].S.^2),
                         copy(Fsvd[t-1].Vt),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updateF!(M,Yflatlist,HeteroscedasticPCA.ExpectationMaximization())
+                    updateF!(M,Yflatlist,ExpectationMaximization())
                     @test M.U ≈ Fsvd[t].U
                     @test M.λ ≈ Fsvd[t].S.^2
                     @test M.Vt ≈ Fsvd[t].Vt
@@ -90,13 +94,13 @@ rng = MersenneTwister(123)
             end
             @testset "updatev! (RootFinding)" begin
                 for t in 2:length(vref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Fsvd[t].U),
                         copy(Fsvd[t].S.^2),
                         copy(Fsvd[t].Vt),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updatev!(M,Yflatlist,HeteroscedasticPCA.RootFinding())
+                    updatev!(M,Yflatlist,RootFinding())
                     @test M.v ≈ vref[t]
                 end
             end
@@ -135,37 +139,37 @@ rng = MersenneTwister(123)
             VtI = Matrix{Float64}(I,k,k)
             @testset "updateλ! (RootFinding)" begin
                 for t in 2:length(λref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t-1]),
                         copy(λref[t-1]),
                         copy(VtI),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updateλ!(M,Yflatlist,HeteroscedasticPCA.RootFinding())
+                    updateλ!(M,Yflatlist,RootFinding())
                     @test M.λ ≈ λref[t]
                 end
             end
             @testset "updateU! (MinorizeMaximize)" begin
                 for t in 2:length(Uref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t-1]),
                         copy(λref[t]),
                         copy(VtI),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updateU!(M,Yflatlist,HeteroscedasticPCA.MinorizeMaximize())
+                    updateU!(M,Yflatlist,MinorizeMaximize())
                     @test M.U ≈ Uref[t]
                 end
             end
             @testset "updatev! (RootFinding)" begin
                 for t in 2:length(vref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t]),
                         copy(λref[t]),
                         copy(VtI),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updatev!(M,Yflatlist,HeteroscedasticPCA.RootFinding())
+                    updatev!(M,Yflatlist,RootFinding())
                     @test M.v ≈ vref[t]
                 end
             end
@@ -206,19 +210,19 @@ rng = MersenneTwister(123)
             VtI = Matrix{Float64}(I,k,k)
             @testset "updateλ! (RootFinding)" begin
                 for t in 2:length(λref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t-1]),
                         copy(λref[t-1]),
                         copy(VtI),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updateλ!(M,Yflatlist,HeteroscedasticPCA.RootFinding())
+                    updateλ!(M,Yflatlist,RootFinding())
                     @test M.λ ≈ λref[t]
                 end
             end
             @testset "updateU! (ProjectedGradientAscent)" begin
                 for t in 2:length(Uref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t-1]),
                         copy(λref[t]),
                         copy(VtI),
@@ -226,19 +230,19 @@ rng = MersenneTwister(123)
                     )
                     Ynorms = norm.(Yflatlist)
                     L = sum(ynorm^2*maximum([λj/vi/(λj+vi) for λj in M.λ]) for (ynorm,vi) in zip(Ynorms,M.v))
-                    HeteroscedasticPCA.updateU!(M,Yflatlist,HeteroscedasticPCA.ProjectedGradientAscent(1/L))
+                    updateU!(M,Yflatlist,ProjectedGradientAscent(1/L))
                     @test M.U ≈ Uref[t]
                 end
             end
             @testset "updatev! (RootFinding)" begin
                 for t in 2:length(vref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t]),
                         copy(λref[t]),
                         copy(VtI),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updatev!(M,Yflatlist,HeteroscedasticPCA.RootFinding())
+                    updatev!(M,Yflatlist,RootFinding())
                     @test M.v ≈ vref[t]
                 end
             end
@@ -283,37 +287,37 @@ rng = MersenneTwister(123)
             VtI = Matrix{Float64}(I,k,k)
             @testset "updateλ! (RootFinding)" begin
                 for t in 2:length(λref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t-1]),
                         copy(λref[t-1]),
                         copy(VtI),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updateλ!(M,Yflatlist,HeteroscedasticPCA.RootFinding())
+                    updateλ!(M,Yflatlist,RootFinding())
                     @test M.λ ≈ λref[t]
                 end
             end
             @testset "updateU! (StiefelGradientAscent)" begin
                 for t in 2:length(Uref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t-1]),
                         copy(λref[t]),
                         copy(VtI),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updateU!(M,Yflatlist,HeteroscedasticPCA.StiefelGradientAscent(50,0.8,0.5,1.0))
+                    updateU!(M,Yflatlist,StiefelGradientAscent(50,0.8,0.5,1.0))
                     @test M.U ≈ Uref[t]
                 end
             end
             @testset "updatev! (RootFinding)" begin
                 for t in 2:length(vref)
-                    M = HeteroscedasticPCA.HPPCA(
+                    M = HPPCA(
                         copy(Uref[t]),
                         copy(λref[t]),
                         copy(VtI),
                         copy(vref[t-1])
                     )
-                    HeteroscedasticPCA.updatev!(M,Yflatlist,HeteroscedasticPCA.RootFinding())
+                    updatev!(M,Yflatlist,RootFinding())
                     @test M.v ≈ vref[t]
                 end
             end
@@ -360,10 +364,10 @@ end
         Uhat, λhat, vhat = HeteroscedasticPCA.ppca(Y, k, 10, F0, Val(:sage))
         VtI = Matrix{Float64}(I,k,k)
         @test all(zip(Uhat[2:end],λhat[2:end],vhat[2:end])) do (U,λ,vv)
-            Mblock = HeteroscedasticPCA.HPPCA(copy(U), copy(λ), copy(VtI), copy(vv))
-            HeteroscedasticPCA.updateλ!(Mblock,Y,HeteroscedasticPCA.RootFinding())
-            Mflat = HeteroscedasticPCA.HPPCA(copy(U), copy(λ), copy(VtI), vcat(fill.(copy(vv),n)...))
-            HeteroscedasticPCA.updateλ!(Mflat,Yflat,HeteroscedasticPCA.RootFinding())
+            Mblock = HPPCA(copy(U), copy(λ), copy(VtI), copy(vv))
+            updateλ!(Mblock,Y,RootFinding())
+            Mflat = HPPCA(copy(U), copy(λ), copy(VtI), vcat(fill.(copy(vv),n)...))
+            updateλ!(Mflat,Yflat,RootFinding())
             Mblock.λ ≈ Mflat.λ
         end
     end
