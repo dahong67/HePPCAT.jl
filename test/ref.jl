@@ -2,7 +2,7 @@ module Ref
 
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
-using LinearAlgebra: Diagonal, I, norm, qr, svd, tr, /
+using LinearAlgebra: Diagonal, I, norm, qr, svd, /
 using Logging: @debug
 
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
@@ -11,81 +11,6 @@ using Logging: @debug
 _findmax(f, domain) = mapfoldl(x -> (f(x), x), _rf_findmax, domain)
 _rf_findmax((fm, m), (fx, x)) = isless(fm, fx) ? (fx, x) : (fm, m)
 _argmax(f, domain) = _findmax(f, domain)[2]
-
-# Types
-struct HPPCA{T<:AbstractFloat}
-    U::Matrix{T}   # eigvecs of FF' (factor/spike covariance)
-    λ::Vector{T}   # eigvals of FF' (factor/spike covariance)
-    Vt::Matrix{T}  # (transposed) eigvecs of F'F (i.e., right singvecs of F)
-    v::Vector{T}   # block noise variances
-    function HPPCA{T}(U,λ,Vt,v) where {T<:AbstractFloat}
-        size(U,2) == length(λ) || throw(DimensionMismatch("U has dimensions $(size(U)) but λ has length $(length(λ))"))
-        size(Vt,1) == length(λ) || throw(DimensionMismatch("Vt has dimensions $(size(Vt)) but λ has length $(length(λ))"))
-        new{T}(U,λ,Vt,v)
-    end
-end
-HPPCA(U::Matrix{T},λ::Vector{T},Vt::Matrix{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA{T}(U,λ,Vt,v)
-
-struct RootFinding end
-struct ExpectationMaximization end
-struct MinorizeMaximize end
-struct ProjectedGradientAscent{T<:AbstractFloat}
-    stepsize::T
-end
-struct StiefelGradientAscent{S<:Integer,T<:AbstractFloat}
-    maxsearches::S  # maximum number of line searches
-    stepsize::T     # initial stepsize
-    contraction::T  # contraction factor
-    tol::T          # tolerance for sufficient decrease
-end
-
-# PPCA
-function ppca(Y,k,iters,init,::Val{:sage})
-    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
-    MM = [deepcopy(M)]
-    for t = 1:iters
-        updatev!(M,Y,RootFinding())
-        updateF!(M,Y,ExpectationMaximization())
-        push!(MM, deepcopy(M))
-    end
-    return getfield.(MM,:U), getfield.(MM, :λ), getfield.(MM,:v)
-end
-function ppca(Y,k,iters,init,::Val{:mm})
-    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
-    MM = [deepcopy(M)]
-    for t = 1:iters
-        updatev!(M,Y,RootFinding())
-        updateλ!(M,Y,RootFinding())
-        updateU!(M,Y,MinorizeMaximize())
-        push!(MM,deepcopy(M))
-    end
-    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
-end
-function ppca(Y,k,iters,init,::Val{:pgd})
-    Ynorms = vec(mapslices(norm,hcat(Y...),dims=1))
-    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
-    MM = [deepcopy(M)]
-    for t = 1:iters
-        updatev!(M,Y,RootFinding())
-        updateλ!(M,Y,RootFinding())
-        L = sum(ynorm^2*maximum([λj/vi/(λj+vi) for λj in M.λ])
-            for (ynorm,vi) in zip(Ynorms,M.v))
-        updateU!(M,Y,ProjectedGradientAscent(1/L))
-        push!(MM,deepcopy(M))
-    end
-    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
-end
-function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
-    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
-    MM = [deepcopy(M)]
-    for t = 1:iters
-        updatev!(M,Y,RootFinding())
-        updateλ!(M,Y,RootFinding())
-        updateU!(M,Y,StiefelGradientAscent(max_line,α,β,σ))
-        push!(MM,deepcopy(M))
-    end
-    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
-end
 
 # Updates: F
 function updateF_em(F,v,Y)
