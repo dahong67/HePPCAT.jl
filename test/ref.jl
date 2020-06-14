@@ -12,22 +12,7 @@ _findmax(f, domain) = mapfoldl(x -> (f(x), x), _rf_findmax, domain)
 _rf_findmax((fm, m), (fx, x)) = isless(fm, fx) ? (fx, x) : (fm, m)
 _argmax(f, domain) = _findmax(f, domain)[2]
 
-# Updates: F
-function updateF_em(F,v,Y)
-    n, L = size.(Y,2), length(Y)
-    U, θ, V = svd(F)
-    λ = θ.^2
-    
-    Λ = Diagonal(λ)
-    Γ = [inv(Λ + v[l]*I) for l in 1:L]
-    Z = [Γ[l]*sqrt(Λ)*U'*Y[l] for l in 1:L]
-    num = sum(Y[l]*Z[l]'/v[l] for l in 1:L)
-    den = sum(Z[l]*Z[l]'/v[l] + n[l]*Γ[l] for l in 1:L)
-
-    return (num / den) * V'
-end
-
-# Updates: v
+# v updates
 updatev_roots(U,λ,Y) = [updatevl_roots(U,λ,Yl) for Yl in Y]
 function updatevl_roots(U,λ,Yl)
     d, k = size(U)
@@ -53,7 +38,22 @@ function updatevl_roots(U,λ,Yl)
     end
 end
 
-# Updates: U
+# F updates
+function updateF_em(F,v,Y)
+    n, L = size.(Y,2), length(Y)
+    U, θ, V = svd(F)
+    λ = θ.^2
+    
+    Λ = Diagonal(λ)
+    Γ = [inv(Λ + v[l]*I) for l in 1:L]
+    Z = [Γ[l]*sqrt(Λ)*U'*Y[l] for l in 1:L]
+    num = sum(Y[l]*Z[l]'/v[l] for l in 1:L)
+    den = sum(Z[l]*Z[l]'/v[l] + n[l]*Γ[l] for l in 1:L)
+
+    return (num / den) * V'
+end
+
+# U updates
 function polar(A)
     F = svd(A)
     return F.U*F.Vt
@@ -89,7 +89,7 @@ function geodesic(U,X,t)
     return U*M + Matrix(Q)*N
 end
 
-# Updates: λ
+# λ updates
 updateλ_roots(U,v,Y) = [updateλj_roots(uj,v,Y) for uj in eachcol(U)]
 function updateλj_roots(uj,v,Y)
     n, L = size.(Y,2), length(Y)
