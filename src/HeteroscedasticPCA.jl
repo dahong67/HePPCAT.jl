@@ -29,9 +29,13 @@ HPPCA(U::Matrix{T},λ::Vector{T},Vt::Matrix{T},v::Vector{T}) where {T<:AbstractF
 struct RootFinding end
 struct ExpectationMaximization end
 struct MinorizeMaximize end
-struct ProjectedGradientAscent{T<:AbstractFloat}
+struct ProjectedGradientAscent{T}
     stepsize::T
 end
+struct ConstantStep{T<:AbstractFloat}
+    stepsize::T
+end
+getstep(s::ConstantStep) = s.stepsize
 struct StiefelGradientAscent{S<:Integer,T<:AbstractFloat}
     maxsearches::S  # maximum number of line searches
     stepsize::T     # initial stepsize
@@ -150,10 +154,11 @@ F(U,λ,v,Y) = sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in 
 
 updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)); M)
 function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
-    if pga.stepsize == Inf
+    α = getstep(pga.stepsize)
+    if α == Inf
         M.U .= polar(gradF(M.U,M.λ,M.v,Y))
     else
-        M.U .= polar(M.U + pga.stepsize*gradF(M.U,M.λ,M.v,Y))
+        M.U .= polar(M.U + α*gradF(M.U,M.λ,M.v,Y))
     end
     return M
 end
