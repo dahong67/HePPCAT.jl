@@ -188,7 +188,7 @@ function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
     M.U .= geodesic(M.U,∇F,Δ)
     return M
 end
-skew(A) = (A'-A)/2
+skew(A) = (A-A')/2
 function geodesic(U,X,t)
     k = size(U,2)
 

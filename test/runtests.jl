@@ -217,3 +217,10 @@ n, v = (40, 10), (4, 1)
         end
     end
 end
+
+# Test skew-symmetry on several matrices
+rng = MersenneTwister(123)
+@testset "skew: random $n x $n matrix" for n in 1:20
+    A = HeteroscedasticPCA.skew(randn(rng,n,n))
+    @test HeteroscedasticPCA.skew(A) == A == -A'
+end

@@ -96,7 +96,7 @@ function updateU_sga(U,λ,v,Y,maxsearches,stepsize,contraction,tol)
     Δ = stepsize * contraction^maxsearches
     return geodesic(U,∇F,Δ)
 end
-skew(A) = (A'-A)/2
+skew(A) = (A-A')/2
 function geodesic(U,X,t)
     k = size(U,2)
 
