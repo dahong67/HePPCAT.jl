@@ -220,7 +220,25 @@ end
 
 # Test skew-symmetry on several matrices
 rng = MersenneTwister(123)
-@testset "skew: random $n x $n matrix" for n in 1:20
-    A = HeteroscedasticPCA.skew(randn(rng,n,n))
-    @test HeteroscedasticPCA.skew(A) == A == -A'
+@testset "skew" begin
+    @testset "random $n x $n matrix" for n in 1:20
+        A = HeteroscedasticPCA.skew(randn(rng,n,n))
+        @test A == HeteroscedasticPCA.skew(A)
+        @test A == -A'
+    end
+end
+
+# Test orthonormality of StiefelGradientAscent updates
+@testset "StiefelGradientAscent orthonormality" begin
+    Random.seed!(0)
+    d, λ, n, v = 100, [4.,2.], [200,200], [0.2,0.4]
+    k = length(λ)
+    U = svd(randn(d,k)).U
+    F = U*sqrt(Diagonal(λ))
+    Y = [F*randn(k,nl) + sqrt(vl)*randn(d,nl) for (nl,vl) in zip(n,v)]
+    H = HPPCA(svd(randn(d,k)).U,λ,Matrix{Float64}(I,k,k),v)
+    @testset "iterate $t" for t in 1:200
+        updateU!(H,Y,StiefelGradientAscent(10,0.15,0.5,0.01))
+        @test H.U'*H.U ≈ I
+    end
 end
