@@ -13,18 +13,18 @@ _rf_findmax((fm, m), (fx, x)) = isless(fm, fx) ? (fx, x) : (fm, m)
 _argmax(f, domain) = _findmax(f, domain)[2]
 
 # Types
-struct HPPCA{T<:AbstractFloat}
-    U::Matrix{T}   # eigvecs of FF' (factor/spike covariance)
+struct HPPCA{S<:Number,T<:Real}
+    U::Matrix{S}   # eigvecs of FF' (factor/spike covariance)
     λ::Vector{T}   # eigvals of FF' (factor/spike covariance)
-    Vt::Matrix{T}  # (transposed) eigvecs of F'F (i.e., right singvecs of F)
+    Vt::Matrix{S}  # (transposed) eigvecs of F'F (i.e., right singvecs of F)
     v::Vector{T}   # block noise variances
-    function HPPCA{T}(U,λ,Vt,v) where {T<:AbstractFloat}
+    function HPPCA{S,T}(U,λ,Vt,v) where {S<:Number,T<:Real}
         size(U,2) == length(λ) || throw(DimensionMismatch("U has dimensions $(size(U)) but λ has length $(length(λ))"))
         size(Vt,1) == length(λ) || throw(DimensionMismatch("Vt has dimensions $(size(Vt)) but λ has length $(length(λ))"))
-        new{T}(U,λ,Vt,v)
+        new{S,T}(U,λ,Vt,v)
     end
 end
-HPPCA(U::Matrix{T},λ::Vector{T},Vt::Matrix{T},v::Vector{T}) where {T<:AbstractFloat} = HPPCA{T}(U,λ,Vt,v)
+HPPCA(U::Matrix{S},λ::Vector{T},Vt::Matrix{S},v::Vector{T}) where {S<:Number,T<:Real} = HPPCA{S,T}(U,λ,Vt,v)
 
 struct RootFinding end
 struct ExpectationMaximization end
