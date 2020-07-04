@@ -32,7 +32,12 @@ struct MinorizeMaximize end
 struct ProjectedGradientAscent{T<:AbstractFloat}
     stepsize::T
 end
-struct StiefelGradientAscent{S<:Integer,T<:AbstractFloat}
+struct StiefelGradientAscent{T}
+    stepsize::T
+end
+
+# Step sizes
+struct ArmijoSearch{S<:Integer,T<:AbstractFloat}
     maxsearches::S  # maximum number of line searches
     stepsize::T     # initial stepsize
     contraction::T  # contraction factor
@@ -81,7 +86,7 @@ function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
     for t = 1:iters
         updatev!(M,Y,RootFinding())
         updateλ!(M,Y,RootFinding())
-        updateU!(M,Y,StiefelGradientAscent(max_line,α,β,σ))
+        updateU!(M,Y,StiefelGradientAscent(ArmijoSearch(max_line,α,β,σ)))
         push!(MM,deepcopy(M))
     end
     return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
@@ -171,20 +176,22 @@ function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
     end
     return M
 end
-function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent)
+function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
+    params = sga.stepsize
+    
     dFdU = gradF(M.U,M.λ,M.v,Y)
     ∇F = dFdU - M.U*(dFdU'M.U)
 
-    F0, FΔ = F(M.U,M.λ,M.v,Y), sga.tol * norm(∇F)^2
-    for m in 1:sga.maxsearches
-        Δ = sga.stepsize * sga.contraction^(m-1)
+    F0, FΔ = F(M.U,M.λ,M.v,Y), params.tol * norm(∇F)^2
+    for m in 1:params.maxsearches
+        Δ = params.stepsize * params.contraction^(m-1)
         if F(geodesic(M.U,∇F,Δ),M.λ,M.v,Y) >= F0 + Δ * FΔ
             M.U .= geodesic(M.U,∇F,Δ)
             return M
         end
     end
     @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."
-    Δ = sga.stepsize * sga.contraction^sga.maxsearches
+    Δ = params.stepsize * params.contraction^params.maxsearches
     M.U .= geodesic(M.U,∇F,Δ)
     return M
 end

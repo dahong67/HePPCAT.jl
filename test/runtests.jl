@@ -5,6 +5,7 @@ using LinearAlgebra, Random, Test
 using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, MinorizeMaximize,
     ProjectedGradientAscent, RootFinding, StiefelGradientAscent
+using HeteroscedasticPCA: ArmijoSearch
 using HeteroscedasticPCA: LipBoundU, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
 
@@ -80,9 +81,9 @@ n, v = (40, 10), (4, 1)
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
             Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yb,50,0.8,0.5,1.0)
-            Mb = updateU!(deepcopy(MM[t]),Yb,StiefelGradientAscent(50,0.8,0.5,1.0))
+            Mb = updateU!(deepcopy(MM[t]),Yb,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,1.0)))
             @test Ur ≈ Mb.U
-            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,StiefelGradientAscent(50,0.8,0.5,1.0))
+            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,1.0)))
             @test Ur ≈ Mf.U
         end
         
@@ -180,7 +181,7 @@ n, v = (40, 10), (4, 1)
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
             Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yf,50,0.8,0.5,1.0)
-            Mf = updateU!(deepcopy(MM[t]),Yf,StiefelGradientAscent(50,0.8,0.5,1.0))
+            Mf = updateU!(deepcopy(MM[t]),Yf,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,1.0)))
             @test Ur ≈ Mf.U
         end
         
@@ -238,7 +239,7 @@ end
     Y = [F*randn(k,nl) + sqrt(vl)*randn(d,nl) for (nl,vl) in zip(n,v)]
     H = HPPCA(svd(randn(d,k)).U,λ,Matrix{Float64}(I,k,k),v)
     @testset "iterate $t" for t in 1:200
-        updateU!(H,Y,StiefelGradientAscent(10,0.15,0.5,0.01))
+        updateU!(H,Y,StiefelGradientAscent(ArmijoSearch(10,0.15,0.5,0.01)))
         @test H.U'*H.U ≈ I
     end
 end
