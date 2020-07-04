@@ -1,5 +1,5 @@
 using HeteroscedasticPCA
-using LinearAlgebra, Random, Test
+using LinearAlgebra, StableRNGs, Test
 
 # Relevant functions
 using HeteroscedasticPCA: HPPCA
@@ -20,7 +20,7 @@ T = 5
 n, v = (40, 10), (4, 1)
 @testset "n=$(n[1:L]), v=$(v[1:L]), d=$d, k=$k" for L = 1:2, d = 5:10:25, k = 1:3
     # Compute test problem
-    rng = MersenneTwister(123)
+    rng = StableRNG(123)
     F, Z = randn(rng,d,k), [randn(rng,k,n[l]) for l in 1:L]
     Yb = [F*Z[l] + sqrt(v[l])*randn(rng,d,n[l]) for l in 1:L]   # blocked
     Yf = collect(eachcol(hcat(Yb...)))                          # flatten
@@ -220,8 +220,8 @@ n, v = (40, 10), (4, 1)
 end
 
 # Test skew-symmetry on several matrices
-rng = MersenneTwister(123)
 @testset "skew" begin
+    rng = StableRNG(123)
     @testset "random $n x $n matrix" for n in 1:20
         A = HeteroscedasticPCA.skew(randn(rng,n,n))
         @test A == HeteroscedasticPCA.skew(A)
@@ -231,7 +231,7 @@ end
 
 # Test orthonormality of StiefelGradientAscent updates
 @testset "StiefelGradientAscent orthonormality" begin
-    rng = MersenneTwister(123)
+    rng = StableRNG(123)
     d, λ, n, v = 100, [4.,2.], [200,200], [0.2,0.4]
     k = length(λ)
     U = svd(randn(rng,d,k)).U
@@ -246,7 +246,7 @@ end
 
 # Test StiefelGradientAscent line search warning
 @testset "StiefelGradientAscent line search warning" begin
-    rng = MersenneTwister(123)
+    rng = StableRNG(123)
     d, λ, n, v = 100, [4.,2.], [200,200], [0.2,0.4]
     k = length(λ)
     U = svd(randn(rng,d,k)).U
