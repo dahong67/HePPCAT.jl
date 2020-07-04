@@ -16,6 +16,20 @@ include("ref.jl")
 factormatrix(M::HPPCA) = M.U*sqrt(Diagonal(M.λ))*M.Vt
 flatten(M::HPPCA,n) = HPPCA(M.U,M.λ,M.Vt,vcat(fill.(M.v,n)...))
 
+# Test convenience constructors and equality
+@testset "Constructors" begin
+    rng = StableRNG(123)
+    d, k, v = 10, 3, [4.0,2.0]
+    F = randn(rng,d,k)
+    U, s, V = svd(F)
+    λ = s.^2
+    
+    @test HPPCA(U,λ,V',v) == HPPCA(U,λ,V',Int.(v))
+    @test HPPCA(U,λ,Matrix{Float64}(I,k,k),v) == HPPCA(U,λ,I(k),v)
+    @test HPPCA(U,λ,V',v) == HPPCA(F,v)
+end
+
+# Test all updates
 T = 5
 n, v = (40, 10), (4, 1)
 @testset "n=$(n[1:L]), v=$(v[1:L]), d=$d, k=$k" for L = 1:2, d = 5:10:25, k = 1:3
@@ -27,8 +41,7 @@ n, v = (40, 10), (4, 1)
     
     @testset "block calls" begin
         # Generate sequence of test iterates
-        init = svd(randn(rng,d,k))
-        MM = [HPPCA(init.U,init.S.^2,init.Vt,rand(rng,L))]
+        MM = [HPPCA(randn(rng,d,k),rand(rng,L))]
         for t in 1:T
             push!(MM, deepcopy(MM[end]))
             updatev!(MM[end],Yb,RootFinding())
@@ -135,8 +148,7 @@ n, v = (40, 10), (4, 1)
     
     @testset "flat calls" begin
         # Generate sequence of test iterates
-        init = svd(randn(rng,d,k))
-        MM = [HPPCA(init.U,init.S.^2,init.Vt,rand(rng,sum(n[1:L])))]
+        MM = [HPPCA(randn(rng,d,k),rand(rng,sum(n[1:L])))]
         for t in 1:T
             push!(MM, deepcopy(MM[end]))
             updatev!(MM[end],Yf,RootFinding())

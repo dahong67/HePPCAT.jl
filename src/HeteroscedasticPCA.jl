@@ -25,6 +25,19 @@ struct HPPCA{S<:Number,T<:Real}
     end
 end
 HPPCA(U::Matrix{S},λ::Vector{T},Vt::Matrix{S},v::Vector{T}) where {S<:Number,T<:Real} = HPPCA{S,T}(U,λ,Vt,v)
+function HPPCA(U::AbstractMatrix,λ::AbstractVector,Vt::AbstractMatrix,v::AbstractVector)
+    S = promote_type(eltype(U),eltype(Vt))
+    T = promote_type(eltype(λ),eltype(v))
+    HPPCA(convert(Matrix{S},U),
+        convert(Vector{T},λ),
+        convert(Matrix{S},Vt),
+        convert(Vector{T},v))
+end
+function HPPCA(F::AbstractMatrix,v::AbstractVector)
+    U,s,V = svd(F)
+    return HPPCA(U,s.^2,V',v)
+end
+Base.:(==)(F::HPPCA, G::HPPCA) = all(f -> getfield(F, f) == getfield(G, f), 1:nfields(F))
 
 struct RootFinding end
 struct ExpectationMaximization end
