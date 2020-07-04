@@ -3,7 +3,7 @@ module HeteroscedasticPCA
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
 using LinearAlgebra: Diagonal, I, norm, qr, svd, /
-using Logging: @debug
+using Logging: @warn
 
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
 # argmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L830
@@ -193,7 +193,7 @@ function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
             return M
         end
     end
-    @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."
+    @warn "Exceeded maximum line search iterations. Accuracy not guaranteed."
     Δ = params.stepsize * params.contraction^params.maxsearches
     M.U .= geodesic(M.U,∇F,Δ)
     return M

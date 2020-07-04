@@ -243,3 +243,16 @@ end
         @test H.U'*H.U ≈ I
     end
 end
+
+# Test StiefelGradientAscent line search warning
+@testset "StiefelGradientAscent line search warning" begin
+    Random.seed!(0)
+    d, λ, n, v = 100, [4.,2.], [200,200], [0.2,0.4]
+    k = length(λ)
+    U = svd(randn(d,k)).U
+    F = U*sqrt(Diagonal(λ))
+    Y = [F*randn(k,nl) + sqrt(vl)*randn(d,nl) for (nl,vl) in zip(n,v)]
+    H = HPPCA(svd(randn(d,k)).U,λ,Matrix{Float64}(I,k,k),v)
+    @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(0,0.15,0.5,0.01)))
+    @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(2,10.0,0.5,0.01)))
+end
