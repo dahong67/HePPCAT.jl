@@ -23,6 +23,7 @@
 + [ ] Further enhancements
   + [x] Give updates meaningful return values
   + [ ] Add all methods from paper
+  + [ ] Add missing approaches: PGA line search, StGA constant step
   + [ ] Add tests to cover more cases (e.g., blocks vs. flat)
   + [ ] Make reference implementations for tests simple / easily checkable
   + [ ] Simplify/unify tests and benchmarks
