@@ -29,7 +29,7 @@ HPPCA(U::Matrix{S},λ::Vector{T},Vt::Matrix{S},v::Vector{T}) where {S<:Number,T<
 struct RootFinding end
 struct ExpectationMaximization end
 struct MinorizeMaximize end
-struct ProjectedGradientAscent{T<:AbstractFloat}
+struct ProjectedGradientAscent{T}
     stepsize::T
 end
 struct StiefelGradientAscent{T}
@@ -37,6 +37,7 @@ struct StiefelGradientAscent{T}
 end
 
 # Step sizes
+struct InverseLipschitz end
 struct ArmijoSearch{S<:Integer,T<:AbstractFloat}
     maxsearches::S  # maximum number of line searches
     stepsize::T     # initial stepsize
@@ -168,7 +169,7 @@ function LipBoundU(M::HPPCA,Ynorm)
 end
 
 updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)); M)
-function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
+function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:Number})
     if pga.stepsize == Inf
         M.U .= polar(gradF(M.U,M.λ,M.v,Y))
     else
@@ -176,6 +177,8 @@ function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent)
     end
     return M
 end
+updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{InverseLipschitz}) =
+    updateU!(M,Y,ProjectedGradientAscent(1/LipBoundU(M,norm.(Y))))
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
     params = sga.stepsize
     

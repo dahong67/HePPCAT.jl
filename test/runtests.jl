@@ -5,7 +5,7 @@ using LinearAlgebra, Random, Test
 using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, MinorizeMaximize,
     ProjectedGradientAscent, RootFinding, StiefelGradientAscent
-using HeteroscedasticPCA: ArmijoSearch
+using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
 using HeteroscedasticPCA: LipBoundU, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
 
@@ -74,9 +74,9 @@ n, v = (40, 10), (4, 1)
         @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
             Lip = Ref.LipBoundU(MM[t].λ,MM[t].v,Yb)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yb,1/Lip)
-            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(1/LipBoundU(MM[t],norm.(Yb))))
+            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(InverseLipschitz()))
             @test Ur ≈ Mb.U
-            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(1/LipBoundU(flatten(MM[t],n[1:L]),norm.(Yf))))
+            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(InverseLipschitz()))
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
@@ -176,7 +176,7 @@ n, v = (40, 10), (4, 1)
         @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
             Lip = Ref.LipBoundU(MM[t].λ,MM[t].v,Yf)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yf,1/Lip)
-            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(1/LipBoundU(MM[t],norm.(Yf))))
+            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(InverseLipschitz()))
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
