@@ -37,7 +37,7 @@ n, v = (40, 10), (4, 1)
     rng = StableRNG(123)
     F, Z = randn(rng,d,k), [randn(rng,k,n[l]) for l in 1:L]
     Yb = [F*Z[l] + sqrt(v[l])*randn(rng,d,n[l]) for l in 1:L]   # blocked
-    Yf = collect(eachcol(hcat(Yb...)))                          # flatten
+    Yf = reshape.(collect.(eachcol(hcat(Yb...))),:,1)           # flatten
     
     @testset "block calls" begin
         # Generate sequence of test iterates
