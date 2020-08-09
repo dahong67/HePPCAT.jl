@@ -93,10 +93,10 @@ n, v = (40, 10), (4, 1)
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
-            Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yb,50,0.8,0.5,1.0)
-            Mb = updateU!(deepcopy(MM[t]),Yb,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,1.0)))
+            Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yb,50,0.8,0.5,0.5)
+            Mb = updateU!(deepcopy(MM[t]),Yb,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,0.5)))
             @test Ur ≈ Mb.U
-            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,1.0)))
+            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,0.5)))
             @test Ur ≈ Mf.U
         end
         
@@ -117,6 +117,10 @@ n, v = (40, 10), (4, 1)
             @test Fr ≈ Fb
             Ff = HeteroscedasticPCA.F(MM[t].U,MM[t].λ,vf,Yf)
             @test Fr ≈ Ff
+
+            LLr = [Ref.loglikelihood(U,MM[t].λ,vf,Yf) for U in getfield.(MM,:U)]
+            Fb = [HeteroscedasticPCA.F(U,MM[t].λ,MM[t].v,Yb) for U in getfield.(MM,:U)]
+            @test LLr ≈ Fb .+ (LLr[1] - Fb[1])    # "values match up to a constant w.r.t U"
             
             Gr = Ref.gradF(MM[t].U,MM[t].λ,vf,Yf)
             Gb = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yb)
@@ -192,8 +196,8 @@ n, v = (40, 10), (4, 1)
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
-            Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yf,50,0.8,0.5,1.0)
-            Mf = updateU!(deepcopy(MM[t]),Yf,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,1.0)))
+            Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yf,50,0.8,0.5,0.5)
+            Mf = updateU!(deepcopy(MM[t]),Yf,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,0.5)))
             @test Ur ≈ Mf.U
         end
         
@@ -209,6 +213,10 @@ n, v = (40, 10), (4, 1)
             Fr = Ref.F(MM[t].U,MM[t].λ,MM[t].v,Yf)
             Ff = HeteroscedasticPCA.F(MM[t].U,MM[t].λ,MM[t].v,Yf)
             @test Fr ≈ Ff
+
+            LLr = [Ref.loglikelihood(U,MM[t].λ,MM[t].v,Yf) for U in getfield.(MM,:U)]
+            Ff = [HeteroscedasticPCA.F(U,MM[t].λ,MM[t].v,Yf) for U in getfield.(MM,:U)]
+            @test LLr ≈ Ff .+ (LLr[1] - Ff[1])    # "values match up to a constant w.r.t U"
             
             Gr = Ref.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
@@ -251,7 +259,7 @@ end
     Y = [F*randn(rng,k,nl) + sqrt(vl)*randn(rng,d,nl) for (nl,vl) in zip(n,v)]
     H = HPPCA(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
     @testset "iterate $t" for t in 1:200
-        updateU!(H,Y,StiefelGradientAscent(ArmijoSearch(10,0.15,0.5,0.01)))
+        updateU!(H,Y,StiefelGradientAscent(ArmijoSearch(10,0.15,0.5,0.005)))
         @test H.U'*H.U ≈ I
     end
 end
@@ -265,6 +273,6 @@ end
     F = U*sqrt(Diagonal(λ))
     Y = [F*randn(rng,k,nl) + sqrt(vl)*randn(rng,d,nl) for (nl,vl) in zip(n,v)]
     H = HPPCA(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
-    @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(0,0.15,0.5,0.01)))
-    @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(2,10.0,0.5,0.01)))
+    @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(0,0.15,0.5,0.005)))
+    @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(2,10.0,0.5,0.005)))
 end
