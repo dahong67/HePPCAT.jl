@@ -6,7 +6,7 @@ using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, MinorizeMaximize,
     ProjectedGradientAscent, RootFinding, StiefelGradientAscent
 using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
-using HeteroscedasticPCA: LipBoundU, loglikelihood
+using HeteroscedasticPCA: LipBoundU1, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
 
 # Load reference implementations
@@ -85,7 +85,7 @@ n, v = (40, 10), (4, 1)
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
-            Lip = Ref.LipBoundU(MM[t].λ,MM[t].v,Yb)
+            Lip = Ref.LipBoundU1(MM[t].λ,MM[t].v,Yb)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yb,1/Lip)
             Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(InverseLipschitz()))
             @test Ur ≈ Mb.U
@@ -134,13 +134,13 @@ n, v = (40, 10), (4, 1)
             @test GadF ≈ Gb
         end
         
-        # Test Lipschitz bound w.r.t U
-        @testset "LipBoundU: t=$t" for t in 1:T
+        # Test Lipschitz bound 1 w.r.t U
+        @testset "LipBoundU1: t=$t" for t in 1:T
             vf = vcat(fill.(MM[t].v,n[1:L])...)
-            Lipr = Ref.LipBoundU(MM[t].λ,vf,Yf)
-            Lipb = LipBoundU(MM[t],norm.(Yb))
+            Lipr = Ref.LipBoundU1(MM[t].λ,vf,Yf)
+            Lipb = LipBoundU1(MM[t],Yb)
             @test Lipr ≈ Lipb
-            Lipf = LipBoundU(flatten(MM[t],n[1:L]),norm.(Yf))
+            Lipf = LipBoundU1(flatten(MM[t],n[1:L]),Yf)
             @test Lipr ≈ Lipf
 
             Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
@@ -198,7 +198,7 @@ n, v = (40, 10), (4, 1)
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
-            Lip = Ref.LipBoundU(MM[t].λ,MM[t].v,Yf)
+            Lip = Ref.LipBoundU1(MM[t].λ,MM[t].v,Yf)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yf,1/Lip)
             Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(InverseLipschitz()))
             @test Ur ≈ Mf.U
@@ -236,10 +236,10 @@ n, v = (40, 10), (4, 1)
             @test GadF ≈ Gf
         end
         
-        # Test Lipschitz bound w.r.t U
-        @testset "LipBoundU: t=$t" for t in 1:T
-            Lipr = Ref.LipBoundU(MM[t].λ,MM[t].v,Yf)
-            Lipf = LipBoundU(MM[t],norm.(Yf))
+        # Test Lipschitz bound 1 w.r.t U
+        @testset "LipBoundU1: t=$t" for t in 1:T
+            Lipr = Ref.LipBoundU1(MM[t].λ,MM[t].v,Yf)
+            Lipf = LipBoundU1(MM[t],Yf)
             @test Lipr ≈ Lipf
 
             Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
