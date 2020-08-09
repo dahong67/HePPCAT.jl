@@ -142,6 +142,9 @@ n, v = (40, 10), (4, 1)
             @test Lipr ≈ Lipb
             Lipf = LipBoundU(flatten(MM[t],n[1:L]),norm.(Yf))
             @test Lipr ≈ Lipf
+
+            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
+            @test opnorm(Hess) <= Lipb
         end
         
         # Test log-likelihood
@@ -238,6 +241,9 @@ n, v = (40, 10), (4, 1)
             Lipr = Ref.LipBoundU(MM[t].λ,MM[t].v,Yf)
             Lipf = LipBoundU(MM[t],norm.(Yf))
             @test Lipr ≈ Lipf
+
+            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+            @test opnorm(Hess) <= Lipf
         end
         
         # Test log-likelihood
