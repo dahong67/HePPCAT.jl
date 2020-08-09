@@ -1,5 +1,5 @@
 using HeteroscedasticPCA
-using LinearAlgebra, StableRNGs, Test
+using ForwardDiff, LinearAlgebra, StableRNGs, Test
 
 # Relevant functions
 using HeteroscedasticPCA: HPPCA
@@ -127,6 +127,11 @@ n, v = (40, 10), (4, 1)
             @test Gr ≈ Gb
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,vf,Yf)
             @test Gr ≈ Gf
+
+            GadLL = ForwardDiff.gradient(U -> Ref.loglikelihood(U,MM[t].λ,vf,Yf),MM[t].U)
+            @test GadLL ≈ Gb
+            GadF = ForwardDiff.gradient(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
+            @test GadF ≈ Gb
         end
         
         # Test Lipschitz bound w.r.t U
@@ -221,6 +226,11 @@ n, v = (40, 10), (4, 1)
             Gr = Ref.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
             @test Gr ≈ Gf
+
+            GadLL = ForwardDiff.gradient(U -> Ref.loglikelihood(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+            @test GadLL ≈ Gf
+            GadF = ForwardDiff.gradient(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+            @test GadF ≈ Gf
         end
         
         # Test Lipschitz bound w.r.t U
