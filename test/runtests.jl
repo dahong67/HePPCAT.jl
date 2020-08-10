@@ -144,7 +144,7 @@ n, v = (40, 10), (4, 1)
             @test Lipr ≈ Lipf
 
             Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
-            @test opnorm(Hess) <= Lipb
+            @test (1-1e-12)*opnorm(Hess) <= Lipb
         end
         
         # Test Lipschitz bound 2 w.r.t U
@@ -154,7 +154,7 @@ n, v = (40, 10), (4, 1)
             @test Lipr ≈ Lipb
 
             Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yb),MM[t].U)
-            @test opnorm(Hess) <= Lipb
+            @test (1-1e-12)*opnorm(Hess) <= Lipb
         end
         
         # Test log-likelihood
@@ -253,7 +253,7 @@ n, v = (40, 10), (4, 1)
             @test Lipr ≈ Lipf
 
             Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
-            @test opnorm(Hess) <= Lipf
+            @test (1-1e-12)*opnorm(Hess) <= Lipf
         end
         
         # Test Lipschitz bound 2 w.r.t U
@@ -263,7 +263,7 @@ n, v = (40, 10), (4, 1)
             @test Lipr ≈ Lipf
 
             Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
-            @test opnorm(Hess) <= Lipf
+            @test (1-1e-12)*opnorm(Hess) <= Lipf
         end
 
         # Test log-likelihood
