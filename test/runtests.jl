@@ -85,12 +85,12 @@ n, v = (40, 10), (4, 1)
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
-            Lip = Ref.LipBoundU1(MM[t].λ,MM[t].v,Yb)
+            Lip = Ref.LipBoundU2(MM[t].λ,MM[t].v,Yb)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yb,1/Lip)
             Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(InverseLipschitz()))
             @test Ur ≈ Mb.U
-            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(InverseLipschitz()))
-            @test Ur ≈ Mf.U
+            # Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(InverseLipschitz()))  # LipBound2 depends on
+            # @test Ur ≈ Mf.U                                                                                # how the blocks are done
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
             Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yb,50,0.8,0.5,0.5)
@@ -208,7 +208,7 @@ n, v = (40, 10), (4, 1)
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (ProjectedGradientAscent, Lipschitz): t=$t" for t in 1:T
-            Lip = Ref.LipBoundU1(MM[t].λ,MM[t].v,Yf)
+            Lip = Ref.LipBoundU2(MM[t].λ,MM[t].v,Yf)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yf,1/Lip)
             Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(InverseLipschitz()))
             @test Ur ≈ Mf.U

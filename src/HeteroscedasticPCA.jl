@@ -195,7 +195,7 @@ function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:Number})
     return M
 end
 updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{InverseLipschitz}) =
-    updateU!(M,Y,ProjectedGradientAscent(1/LipBoundU1(M,Y)))
+    updateU!(M,Y,ProjectedGradientAscent(1/LipBoundU2(M,Y)))
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
     params = sga.stepsize
     
