@@ -2,7 +2,7 @@ module HeteroscedasticPCA
 
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
-using LinearAlgebra: Diagonal, I, norm, qr, svd, /
+using LinearAlgebra: Diagonal, I, opnorm, norm, qr, svd, /
 using Logging: @warn
 
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
@@ -179,6 +179,10 @@ F(U,λ,v,Y) = 1/2*sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl)
 function LipBoundU1(M::HPPCA,Y)
     L, λmax = length(M.v), maximum(M.λ)
     return sum(norm(Y[l])^2*λmax/M.v[l]/(λmax+M.v[l]) for l in 1:L)
+end
+function LipBoundU2(M::HPPCA,Y)
+    L, λmax = length(M.v), maximum(M.λ)
+    return sum(opnorm(Y[l])^2*λmax/M.v[l]/(λmax+M.v[l]) for l in 1:L)
 end
 
 updateU!(M::HPPCA,Y,::MinorizeMaximize) = (M.U .= polar(gradF(M.U,M.λ,M.v,Y)); M)

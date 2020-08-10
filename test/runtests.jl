@@ -6,7 +6,7 @@ using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, MinorizeMaximize,
     ProjectedGradientAscent, RootFinding, StiefelGradientAscent
 using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
-using HeteroscedasticPCA: LipBoundU1, loglikelihood
+using HeteroscedasticPCA: LipBoundU1, LipBoundU2, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
 
 # Load reference implementations
@@ -147,6 +147,16 @@ n, v = (40, 10), (4, 1)
             @test opnorm(Hess) <= Lipb
         end
         
+        # Test Lipschitz bound 2 w.r.t U
+        @testset "LipBoundU2: t=$t" for t in 1:T
+            Lipr = Ref.LipBoundU2(MM[t].λ,MM[t].v,Yb)
+            Lipb = LipBoundU2(MM[t],Yb)
+            @test Lipr ≈ Lipb
+
+            Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yb),MM[t].U)
+            @test opnorm(Hess) <= Lipb
+        end
+        
         # Test log-likelihood
         @testset "loglikelihood: t=$t" for t in 1:T
             vf = vcat(fill.(MM[t].v,n[1:L])...)
@@ -246,6 +256,16 @@ n, v = (40, 10), (4, 1)
             @test opnorm(Hess) <= Lipf
         end
         
+        # Test Lipschitz bound 2 w.r.t U
+        @testset "LipBoundU2: t=$t" for t in 1:T
+            Lipr = Ref.LipBoundU2(MM[t].λ,MM[t].v,Yf)
+            Lipf = LipBoundU2(MM[t],Yf)
+            @test Lipr ≈ Lipf
+
+            Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+            @test opnorm(Hess) <= Lipf
+        end
+
         # Test log-likelihood
         @testset "loglikelihood: t=$t" for t in 1:T
             LLr = Ref.loglikelihood(MM[t].U,MM[t].λ,MM[t].v,Yf)

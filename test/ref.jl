@@ -2,7 +2,7 @@ module Ref
 
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
-using LinearAlgebra: Diagonal, I, norm, qr, svd, /
+using LinearAlgebra: Diagonal, I, opnorm, norm, qr, svd, /
 using Logging: @debug
 
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
@@ -79,6 +79,10 @@ F(U,λ,v,Y) = 1/2*sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl)
 function LipBoundU1(λ,v,Y)
     L, λmax = length(v), maximum(λ)
     return sum(norm(Y[l])^2*λmax/v[l]/(λmax+v[l]) for l in 1:L)
+end
+function LipBoundU2(λ,v,Y)
+    L = length(v)
+    return sum(opnorm(Y[l]*Y[l]') * opnorm(Diagonal(λ./v[l]./(λ.+v[l]))) for l in 1:L)
 end
 
 updateU_mm(U,λ,v,Y) = polar(gradF(U,λ,v,Y))
