@@ -1,5 +1,5 @@
 using HeteroscedasticPCA
-using Zygote, LinearAlgebra, StableRNGs, Test
+using ForwardDiff, LinearAlgebra, StableRNGs, Test
 
 # Relevant functions
 using HeteroscedasticPCA: HPPCA
@@ -128,9 +128,9 @@ n, v = (40, 10), (4, 1)
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,vf,Yf)
             @test Gr ≈ Gf
 
-            GadLL = Zygote.gradient(U -> Ref.loglikelihood(U,MM[t].λ,vf,Yf),MM[t].U)[1]
+            GadLL = ForwardDiff.gradient(U -> Ref.loglikelihood(U,MM[t].λ,vf,Yf),MM[t].U)
             @test GadLL ≈ Gb
-            GadF = Zygote.gradient(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)[1]
+            GadF = ForwardDiff.gradient(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
             @test GadF ≈ Gb
         end
         
@@ -143,7 +143,7 @@ n, v = (40, 10), (4, 1)
             Lipf = LipBoundU1(flatten(MM[t],n[1:L]),Yf)
             @test Lipr ≈ Lipf
 
-            Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
+            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
             @test (1-1e-12)*opnorm(Hess) <= Lipb
         end
         
@@ -153,7 +153,7 @@ n, v = (40, 10), (4, 1)
             Lipb = LipBoundU2(MM[t],Yb)
             @test Lipr ≈ Lipb
 
-            Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yb),MM[t].U)
+            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yb),MM[t].U)
             @test (1-1e-12)*opnorm(Hess) <= Lipb
         end
         
@@ -240,9 +240,9 @@ n, v = (40, 10), (4, 1)
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
             @test Gr ≈ Gf
 
-            GadLL = Zygote.gradient(U -> Ref.loglikelihood(U,MM[t].λ,MM[t].v,Yf),MM[t].U)[1]
+            GadLL = ForwardDiff.gradient(U -> Ref.loglikelihood(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
             @test GadLL ≈ Gf
-            GadF = Zygote.gradient(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)[1]
+            GadF = ForwardDiff.gradient(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
             @test GadF ≈ Gf
         end
         
@@ -252,7 +252,7 @@ n, v = (40, 10), (4, 1)
             Lipf = LipBoundU1(MM[t],Yf)
             @test Lipr ≈ Lipf
 
-            Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
             @test (1-1e-12)*opnorm(Hess) <= Lipf
         end
         
@@ -262,7 +262,7 @@ n, v = (40, 10), (4, 1)
             Lipf = LipBoundU2(MM[t],Yf)
             @test Lipr ≈ Lipf
 
-            Hess = Zygote.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
             @test (1-1e-12)*opnorm(Hess) <= Lipf
         end
 
