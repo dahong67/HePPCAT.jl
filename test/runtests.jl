@@ -9,6 +9,9 @@ using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
 using HeteroscedasticPCA: LipBoundU1, LipBoundU2, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
 
+# Flag to use automatic differentiation
+const TEST_WITH_AD = false
+
 # Load reference implementations
 include("ref.jl")
 
@@ -128,10 +131,12 @@ n, v = (40, 10), (4, 1)
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,vf,Yf)
             @test Gr ≈ Gf
 
-            GadLL = ForwardDiff.gradient(U -> Ref.loglikelihood(U,MM[t].λ,vf,Yf),MM[t].U)
-            @test GadLL ≈ Gb
-            GadF = ForwardDiff.gradient(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
-            @test GadF ≈ Gb
+            if TEST_WITH_AD
+                GadLL = ForwardDiff.gradient(U -> Ref.loglikelihood(U,MM[t].λ,vf,Yf),MM[t].U)
+                @test GadLL ≈ Gb
+                GadF = ForwardDiff.gradient(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
+                @test GadF ≈ Gb
+            end
         end
         
         # Test Lipschitz bound 1 w.r.t U
@@ -143,8 +148,10 @@ n, v = (40, 10), (4, 1)
             Lipf = LipBoundU1(flatten(MM[t],n[1:L]),Yf)
             @test Lipr ≈ Lipf
 
-            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
-            @test (1-1e-12)*opnorm(Hess) <= Lipb
+            if TEST_WITH_AD
+                Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,vf,Yf),MM[t].U)
+                @test (1-1e-12)*opnorm(Hess) <= Lipb
+            end
         end
         
         # Test Lipschitz bound 2 w.r.t U
@@ -153,8 +160,10 @@ n, v = (40, 10), (4, 1)
             Lipb = LipBoundU2(MM[t],Yb)
             @test Lipr ≈ Lipb
 
-            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yb),MM[t].U)
-            @test (1-1e-12)*opnorm(Hess) <= Lipb
+            if TEST_WITH_AD
+                Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yb),MM[t].U)
+                @test (1-1e-12)*opnorm(Hess) <= Lipb
+            end
         end
         
         # Test log-likelihood
@@ -240,10 +249,12 @@ n, v = (40, 10), (4, 1)
             Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
             @test Gr ≈ Gf
 
-            GadLL = ForwardDiff.gradient(U -> Ref.loglikelihood(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
-            @test GadLL ≈ Gf
-            GadF = ForwardDiff.gradient(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
-            @test GadF ≈ Gf
+            if TEST_WITH_AD
+                GadLL = ForwardDiff.gradient(U -> Ref.loglikelihood(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+                @test GadLL ≈ Gf
+                GadF = ForwardDiff.gradient(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+                @test GadF ≈ Gf
+            end
         end
         
         # Test Lipschitz bound 1 w.r.t U
@@ -252,8 +263,10 @@ n, v = (40, 10), (4, 1)
             Lipf = LipBoundU1(MM[t],Yf)
             @test Lipr ≈ Lipf
 
-            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
-            @test (1-1e-12)*opnorm(Hess) <= Lipf
+            if TEST_WITH_AD
+                Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+                @test (1-1e-12)*opnorm(Hess) <= Lipf
+            end
         end
         
         # Test Lipschitz bound 2 w.r.t U
@@ -262,8 +275,10 @@ n, v = (40, 10), (4, 1)
             Lipf = LipBoundU2(MM[t],Yf)
             @test Lipr ≈ Lipf
 
-            Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
-            @test (1-1e-12)*opnorm(Hess) <= Lipf
+            if TEST_WITH_AD
+                Hess = ForwardDiff.hessian(U -> Ref.F(U,MM[t].λ,MM[t].v,Yf),MM[t].U)
+                @test (1-1e-12)*opnorm(Hess) <= Lipf
+            end
         end
 
         # Test log-likelihood
