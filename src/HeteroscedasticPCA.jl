@@ -127,19 +127,19 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
     d, k = size(U)
     nl = size(Yl,2)
 
-    # Compute coefficients and root bounds
+    # Compute coefficients and check edge case
     α0, β0 = d-k, norm(Yl-U*U'Yl)^2/nl
     β = [norm(uj'Yl)^2/nl for uj in eachcol(U)]
-    vmin, vmax = extrema([β0/α0; max.(zero.(β), β .- λ)])
+    if iszero(β0) && all(iszero(β[j]) for j in 1:k if iszero(λ[j]))
+        return zero(vl)
+    end
 
-    # Compute roots
+    # Find nonnegative critical points
     tol = 1e-8  # todo: choose tolerance adaptively
-    vmax-vmin < tol && return (vmax+vmin)/2
-    vcritical = roots(interval(vmin,vmax),Newton,tol) do v
+    vmin, vmax = extrema([β0/α0; β .- λ])
+    vcritical = roots(interval(vmin,vmax) ∩ interval(zero(vl),Inf),Newton,tol) do v
         β0/v^2-α0/v + sum(β[j]/(λ[j]+v)^2 - 1/(λ[j]+v) for j in 1:k)
     end
-    isempty(vcritical) && return vmin
-    length(vcritical) == 1 && return mid(interval(first(vcritical)))
 
     # Return maximizer
     return _argmax(mid.(interval.(vcritical))) do v
