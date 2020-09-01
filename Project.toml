@@ -4,6 +4,7 @@ authors = ["David Hong <dahong67@wharton.upenn.edu> and contributors"]
 version = "0.1.0"
 
 [deps]
+IdentityRanges = "bbac6d45-d8f3-5730-bfe4-7a449cd117ca"
 IntervalArithmetic = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
 IntervalRootFinding = "d2bf35a9-74e0-55ec-b149-d360ff49b807"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

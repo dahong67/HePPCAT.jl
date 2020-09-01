@@ -1,5 +1,6 @@
 module HeteroscedasticPCA
 
+using IdentityRanges: IdentityRange
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
 using LinearAlgebra: Diagonal, I, opnorm, norm, qr, svd, /
@@ -128,22 +129,23 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
     nl = size(Yl,2)
 
     # Compute coefficients and check edge case
-    α0, β0 = d-k, norm(Yl-U*U'Yl)^2/nl
-    β = [norm(uj'Yl)^2/nl for uj in eachcol(U)]
-    if iszero(β0) && all(iszero(β[j]) for j in 1:k if iszero(λ[j]))
+    α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
+    β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
+    γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
+    if all(iszero(β[j]) for j in 0:k if iszero(γ[j]))
         return zero(vl)
     end
 
     # Find nonnegative critical points
     tol = 1e-8  # todo: choose tolerance adaptively
-    vmin, vmax = extrema([β0/α0; β .- λ])
+    vmin, vmax = extrema(β[j]/α[j]-γ[j] for j in 0:k if !(iszero(α[j]) && iszero(β[j])))
     vcritical = roots(interval(vmin,vmax) ∩ interval(zero(vl),Inf),Newton,tol) do v
-        β0/v^2-α0/v + sum(β[j]/(λ[j]+v)^2 - 1/(λ[j]+v) for j in 1:k)
+        - sum(α[j]/(γ[j]+v) for j in 0:k if !iszero(α[j])) + sum(β[j]/(γ[j]+v)^2 for j in 0:k if !iszero(β[j]))
     end
 
     # Return maximizer
     return _argmax(mid.(interval.(vcritical))) do v
-        -(α0*log(v)+β0/v + sum(log(λ[j]+v) + β[j]/(λ[j]+v) for j in 1:k))
+        -(sum(α[j]*log(γ[j]+v) for j in 0:k if !iszero(α[j])) + sum(β[j]/(γ[j]+v) for j in 0:k if !iszero(β[j])))
     end
 end
 function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
