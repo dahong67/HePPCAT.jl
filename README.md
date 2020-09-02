@@ -44,3 +44,5 @@
     + Maybe add specific implementations for this case
   + [ ] Consider contributing code for the canonical metric to `Manifolds.jl`
 + [ ] Run through `JuliaFormatter`
++ [ ] Test edge cases for the updates (e.g., cases where objective may evaluate to `+Inf`, `-Inf` or `NaN` or where root-finding may encounter issues)
++ [ ] Test convergence to critical points
