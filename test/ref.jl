@@ -5,6 +5,7 @@ using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
 using LinearAlgebra: Diagonal, I, opnorm, norm, qr, svd, /
 using Logging: @debug
+using Roots: find_zero
 
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
 # argmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L830
@@ -54,6 +55,26 @@ function updatev_em(U,λ,v,Y)
     d, k = size(U)
     n, L = size.(Y,2), length(Y)
     return [(norm(Y[l] - U*Diagonal(λ./(λ.+v[l]))*U'*Y[l])^2 + v[l]*n[l]*sum(λ./(λ.+v[l])))/(d*n[l]) for l in 1:L]
+end
+updatev_doc(U,λ,v,Y) = [updatevl_doc(U,λ,v[l],Y[l]) for l in 1:length(Y)]
+function updatevl_doc(U,λ,vl,Yl)
+    d, k = size(U)
+    nl = size(Yl,2)
+
+    # Compute coefficients and check edge case
+    α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
+    β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
+    γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
+    affslope = -sum(α[j]/(γ[j]+vl) for j in 0:k if !iszero(α[j]))
+    Ltp = v -> affslope + sum(β[j]/(γ[j]+v)^2 for j in 0:k if !iszero(β[j]))
+    if affslope == -Inf || Ltp(zero(vl)) <= zero(vl)
+        return zero(vl)
+    end
+
+    # Return nonnegative critical point
+    tol = 1e-8  # todo: choose tolerance adaptively
+    vmax = maximum(sqrt(β[j]/α[j]*(γ[j]+vl)) - γ[j] for j in 0:k if !(iszero(α[j]) && iszero(β[j])))
+    return find_zero(Ltp, (zero(vmax),vmax))
 end
 
 # F updates
