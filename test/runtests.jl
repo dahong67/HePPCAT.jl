@@ -53,7 +53,7 @@ n, v = (40, 10), (4, 1)
         
         # Test v updates
         @testset "updatev! (RootFinding): t=$t" for t in 1:T
-            vr = Ref.updatev_roots(MM[t].U,MM[t].λ,Yb)
+            vr = Ref.updatev_roots(MM[t].U,MM[t].λ,MM[t].v,Yb)
             Mb = updatev!(deepcopy(MM[t]),Yb,RootFinding())
             @test vr ≈ Mb.v
         end
@@ -188,7 +188,7 @@ n, v = (40, 10), (4, 1)
         
         # Test v updates
         @testset "updatev! (RootFinding): t=$t" for t in 1:T
-            vr = Ref.updatev_roots(MM[t].U,MM[t].λ,Yf)
+            vr = Ref.updatev_roots(MM[t].U,MM[t].λ,MM[t].v,Yf)
             Mf = updatev!(deepcopy(MM[t]),Yf,RootFinding())
             @test vr ≈ Mf.v
         end
