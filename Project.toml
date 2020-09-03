@@ -14,4 +14,5 @@ Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 [compat]
 IntervalArithmetic = "0.15, 0.16, 0.17"
 IntervalRootFinding = "0.5"
+Roots = "1.0"
 julia = "1.2"
