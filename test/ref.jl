@@ -115,8 +115,8 @@ function updateU_sga(U,λ,v,Y,maxsearches,stepsize,contraction,tol)
     ∇F = dFdU - U*(dFdU'U)
     
     F0, FΔ = F(U,λ,v,Y), tol * norm(∇F)^2
-    for m in 1:maxsearches
-        Δ = stepsize * contraction^(m-1)
+    for m in 0:maxsearches-1
+        Δ = stepsize * contraction^m
         (F(geodesic(U,∇F,Δ),λ,v,Y) >= F0 + Δ * FΔ) && return geodesic(U,∇F,Δ)
     end
     @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."

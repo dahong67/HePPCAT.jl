@@ -1,5 +1,6 @@
 module HeteroscedasticPCA
 
+using Base: IdentityUnitRange   # swap with IdentityRanges.IdentityRange if working (https://github.com/JuliaArrays/IdentityRanges.jl/issues/12)
 using IdentityRanges: IdentityRange
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
@@ -229,16 +230,16 @@ function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
     ∇F = dFdU - M.U*(dFdU'M.U)
 
     F0, FΔ = F(M.U,M.λ,M.v,Y), params.tol * norm(∇F)^2
-    m = findfirst(1:params.maxsearches) do m
-        Δ = params.stepsize * params.contraction^(m-1)
+    m = findfirst(IdentityUnitRange(0:params.maxsearches-1)) do m
+        Δ = params.contraction^m * params.stepsize
         F(geodesic(M.U,∇F,Δ),M.λ,M.v,Y) >= F0 + Δ * FΔ
     end
     if isnothing(m)
         @warn "Exceeded maximum line search iterations. Accuracy not guaranteed."
-        m = params.maxsearches+1
+        m = params.maxsearches
     end
 
-    Δ = params.stepsize * params.contraction^(m-1)
+    Δ = params.contraction^m * params.stepsize
     M.U .= geodesic(M.U,∇F,Δ)
     return M
 end
