@@ -53,7 +53,10 @@ end
 struct DifferenceOfConcave end
 
 # Step sizes
-struct InverseLipschitz end
+struct InverseLipschitz{T}
+    bound::T
+end
+InverseLipschitz() = InverseLipschitz(LipBoundU2)   # default bound
 struct ArmijoSearch{S<:Integer,T<:AbstractFloat}
     maxsearches::S  # maximum number of line searches
     stepsize::T     # initial stepsize
@@ -217,8 +220,8 @@ function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:Number})
     end
     return M
 end
-updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{InverseLipschitz}) =
-    updateU!(M,Y,ProjectedGradientAscent(1/LipBoundU2(M,Y)))
+updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:InverseLipschitz}) =
+    updateU!(M,Y,ProjectedGradientAscent(inv(pga.stepsize.bound(M,Y))))
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
     params = sga.stepsize
     
