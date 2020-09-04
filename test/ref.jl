@@ -110,6 +110,17 @@ end
 
 updateU_mm(U,λ,v,Y) = polar(gradF(U,λ,v,Y))
 updateU_pga(U,λ,v,Y,α) = α == Inf ? polar(gradF(U,λ,v,Y)) : polar(U + α*gradF(U,λ,v,Y))
+function updateU_pga_armijo(U,λ,v,Y,maxsearches,stepsize,contraction,tol)
+    dFdU = gradF(U,λ,v,Y)
+    F0, FΔ = F(U,λ,v,Y), tol * norm(dFdU)^2
+    for m in 0:maxsearches-1
+        Δ = stepsize * contraction^m
+        (F(polar(U + Δ*dFdU),λ,v,Y) >= F0 + Δ * FΔ) && return polar(U + Δ*dFdU)
+    end
+    @debug "Exceeded maximum line search iterations. Accuracy not guaranteed."
+    Δ = stepsize * contraction^maxsearches
+    return polar(U + Δ*dFdU)
+end
 function updateU_sga(U,λ,v,Y,maxsearches,stepsize,contraction,tol)
     dFdU = gradF(U,λ,v,Y)
     ∇F = dFdU - U*(dFdU'U)

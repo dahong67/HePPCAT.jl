@@ -100,6 +100,13 @@ n, v = (40, 10), (4, 1)
             # Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(InverseLipschitz()))  # LipBound2 depends on
             # @test Ur ≈ Mf.U                                                                                # how the blocks are done
         end
+        @testset "updateU! (ProjectedGradientAscent, Armijo): t=$t" for t in 1:T
+            Ur = Ref.updateU_pga_armijo(MM[t].U,MM[t].λ,MM[t].v,Yb,50,0.8,0.5,1e-4)
+            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(ArmijoSearch(50,0.8,0.5,1e-4)))
+            @test Ur ≈ Mb.U
+            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(ArmijoSearch(50,0.8,0.5,1e-4)))
+            @test Ur ≈ Mf.U
+        end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
             Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yb,50,0.8,0.5,0.5)
             Mb = updateU!(deepcopy(MM[t]),Yb,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,0.5)))
@@ -230,6 +237,11 @@ n, v = (40, 10), (4, 1)
             Lip = Ref.LipBoundU2(MM[t].λ,MM[t].v,Yf)
             Ur = Ref.updateU_pga(MM[t].U,MM[t].λ,MM[t].v,Yf,1/Lip)
             Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(InverseLipschitz()))
+            @test Ur ≈ Mf.U
+        end
+        @testset "updateU! (ProjectedGradientAscent, Armijo): t=$t" for t in 1:T
+            Ur = Ref.updateU_pga_armijo(MM[t].U,MM[t].λ,MM[t].v,Yf,100,0.8,0.5,1e-4)
+            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(ArmijoSearch(100,0.8,0.5,1e-4)))
             @test Ur ≈ Mf.U
         end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T

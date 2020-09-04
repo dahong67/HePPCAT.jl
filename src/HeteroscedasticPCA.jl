@@ -223,6 +223,24 @@ function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:Number})
 end
 updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:InverseLipschitz}) =
     updateU!(M,Y,ProjectedGradientAscent(inv(pga.stepsize.bound(M,Y))))
+function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:ArmijoSearch})
+    params = pga.stepsize
+    
+    dFdU = gradF(M.U,M.λ,M.v,Y)
+    F0, FΔ = F(M.U,M.λ,M.v,Y), params.tol * norm(dFdU)^2
+    m = findfirst(IdentityUnitRange(0:params.maxsearches-1)) do m
+        Δ = params.contraction^m * params.stepsize
+        F(polar(M.U + Δ*dFdU),M.λ,M.v,Y) >= F0 + Δ * FΔ
+    end
+    if isnothing(m)
+        @warn "Exceeded maximum line search iterations. Accuracy not guaranteed."
+        m = params.maxsearches
+    end
+
+    Δ = params.contraction^m * params.stepsize
+    M.U .= polar(M.U + Δ*dFdU)
+    return M
+end
 function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
     params = sga.stepsize
     
