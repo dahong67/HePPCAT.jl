@@ -46,3 +46,4 @@
 + [ ] Run through `JuliaFormatter`
 + [ ] Test edge cases for the updates (e.g., cases where objective may evaluate to `+Inf`, `-Inf` or `NaN` or where root-finding may encounter issues)
 + [ ] Test convergence to critical points
++ [ ] Maybe have `LipBoundU1` and `LipBoundU2` take data and output a function mapping an iterate to Lipschitz bound (might be cleaner and allows for pre-computation)
