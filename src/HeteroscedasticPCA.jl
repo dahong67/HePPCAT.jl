@@ -229,15 +229,16 @@ function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
     ∇F = dFdU - M.U*(dFdU'M.U)
 
     F0, FΔ = F(M.U,M.λ,M.v,Y), params.tol * norm(∇F)^2
-    for m in 1:params.maxsearches
+    m = findfirst(1:params.maxsearches) do m
         Δ = params.stepsize * params.contraction^(m-1)
-        if F(geodesic(M.U,∇F,Δ),M.λ,M.v,Y) >= F0 + Δ * FΔ
-            M.U .= geodesic(M.U,∇F,Δ)
-            return M
-        end
+        F(geodesic(M.U,∇F,Δ),M.λ,M.v,Y) >= F0 + Δ * FΔ
     end
-    @warn "Exceeded maximum line search iterations. Accuracy not guaranteed."
-    Δ = params.stepsize * params.contraction^params.maxsearches
+    if isnothing(m)
+        @warn "Exceeded maximum line search iterations. Accuracy not guaranteed."
+        m = params.maxsearches+1
+    end
+
+    Δ = params.stepsize * params.contraction^(m-1)
     M.U .= geodesic(M.U,∇F,Δ)
     return M
 end
