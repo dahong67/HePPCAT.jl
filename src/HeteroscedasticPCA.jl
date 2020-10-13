@@ -307,7 +307,7 @@ function updateλj(λj,uj,v,Y,::ExpectationMaximization)
 
     num = sum(norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) for l in 1:L)
     den = sum(λj/(λj+v[l]) * (norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) + n[l]) for l in 1:L)
-    return (num/den)^2
+    return λj * (num/den)^2
 end
 function updateλj(λj,uj,v,Y,::MinorizeMaximize)
     n, L = size.(Y,2), length(Y)

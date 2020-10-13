@@ -173,10 +173,8 @@ end
 updateλ_em(λ,U,v,Y) = [updateλj_em(λj,uj,v,Y) for (λj,uj) in zip(λ,eachcol(U))]
 function updateλj_em(λj,uj,v,Y)
     n, L = size.(Y,2), length(Y)
-
-    num = sum(norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) for l in 1:L)
-    den = sum(λj/(λj+v[l]) * (norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) + n[l]) for l in 1:L)
-    return (num/den)^2
+    θj = sum(sqrt(λj)/v[l]/(λj+v[l])*norm(uj'Y[l])^2 for l = 1:L)/sum(λj/v[l]/(λj+v[l])^2*norm(uj'Y[l])^2 + n[l]/(λj+v[l]) for l = 1:L)
+    θj^2
 end
 updateλ_mm(λ,U,v,Y) = [updateλj_mm(λj,uj,v,Y) for (λj,uj) in zip(λ,eachcol(U))]
 function updateλj_mm(λj,uj,v,Y)
