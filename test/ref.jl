@@ -170,5 +170,22 @@ function updateλj_roots(uj,v,Y)
         -sum(n[l]*log(λ+v[l]) + β[l]/(λ+v[l]) for l in 1:L)
     end
 end
+updateλ_em(λ,U,v,Y) = [updateλj_em(λj,uj,v,Y) for (λj,uj) in zip(λ,eachcol(U))]
+function updateλj_em(λj,uj,v,Y)
+    n, L = size.(Y,2), length(Y)
+
+    num = sum(norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) for l in 1:L)
+    den = sum(λj/(λj+v[l]) * (norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) + n[l]) for l in 1:L)
+    return (num/den)^2
+end
+updateλ_mm(λ,U,v,Y) = [updateλj_mm(λj,uj,v,Y) for (λj,uj) in zip(λ,eachcol(U))]
+function updateλj_mm(λj,uj,v,Y)
+    n, L = size.(Y,2), length(Y)
+
+    ζ = [norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) + n[l] for l in 1:L]
+    num = sum(norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) for l in 1:L) * sum(ζ[l]*v[l]/(λj+v[l]) for l in 1:L)
+    den = sum(ζ[l]/(λj+v[l]) for l in 1:L)
+    return (1/sum(n)) * num / den
+end
 
 end

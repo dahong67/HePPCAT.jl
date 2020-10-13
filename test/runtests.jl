@@ -123,6 +123,20 @@ n, v = (40, 10), (4, 1)
             Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,RootFinding())
             @test λr ≈ Mf.λ
         end
+        @testset "updateλ! (ExpectationMaximization): t=$t" for t in 1:T
+            λr = Ref.updateλ_em(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,ExpectationMaximization())
+            @test λr ≈ Mb.λ
+            Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ExpectationMaximization())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (MinorizeMaximize): t=$t" for t in 1:T
+            λr = Ref.updateλ_mm(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,MinorizeMaximize())
+            @test λr ≈ Mb.λ
+            Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,MinorizeMaximize())
+            @test λr ≈ Mf.λ
+        end
         
         # Test F/gradF
         @testset "F/gradF: t=$t" for t in 1:T
@@ -254,6 +268,16 @@ n, v = (40, 10), (4, 1)
         @testset "updateλ! (RootFinding): t=$t" for t in 1:T
             λr = Ref.updateλ_roots(MM[t].U,MM[t].v,Yf)
             Mf = updateλ!(deepcopy(MM[t]),Yf,RootFinding())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (ExpectationMaximization): t=$t" for t in 1:T
+            λr = Ref.updateλ_em(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,ExpectationMaximization())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (MinorizeMaximize): t=$t" for t in 1:T
+            λr = Ref.updateλ_mm(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,MinorizeMaximize())
             @test λr ≈ Mf.λ
         end
         
