@@ -158,7 +158,8 @@ function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     d, k = size(U)
     nl = size(Yl,2)
 
-    return (norm(Yl - U*Diagonal(λ./(λ.+vl))*U'*Yl)^2 + vl*nl*sum(λ./(λ.+vl)))/(d*nl)
+    UYl = vec(sum(abs2,U'Yl,dims=2))
+    return (sum(abs2,Yl) - 2*sum(λ./(λ.+vl) .* UYl) + sum((λ./(λ.+vl)).^2 .* UYl) + vl*nl*sum(λ./(λ.+vl)))/(d*nl)
 end
 function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
     d, k = size(U)
