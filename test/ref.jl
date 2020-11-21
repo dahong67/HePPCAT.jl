@@ -5,6 +5,7 @@ using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
 using LinearAlgebra: Diagonal, I, opnorm, norm, qr, svd, /
 using Logging: @debug
+import PolynomialRoots
 using Roots: find_zero
 
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
@@ -75,6 +76,47 @@ function updatevl_doc(U,λ,vl,Yl)
     tol = 1e-8  # todo: choose tolerance adaptively
     vmax = maximum(sqrt(β[j]/α[j]*(γ[j]+vl)) - γ[j] for j in 0:k if !(iszero(α[j]) && iszero(β[j])))
     return find_zero(Ltp, (zero(vmax),vmax))
+end
+updatev_mm_quad(U,λ,v,Y) = [updatevl_mm_quad(U,λ,v[l],Y[l]) for l in 1:length(Y)]
+function updatevl_mm_quad(U,λ,vl,Yl)
+    d, k = size(U)
+    nl = size(Yl,2)
+
+    # Compute coefficients
+    α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
+    β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
+    γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
+
+    αb = sum(α[j] for j in 0:k if iszero(γ[j]))
+    βb = sum(β[j] for j in 0:k if iszero(γ[j]))
+
+    B = βb + sum(β[j]*vl^2/(γ[j]+vl)^2 for j in 0:k if !iszero(γ[j]))
+    C = sum(1/(γ[j]+vl) for j in 0:k if !iszero(γ[j]))
+    
+    return (-αb + sqrt(αb^2 + 4*C*B))/(2*C)
+end
+updatev_mm_cubic(U,λ,v,Y) = [updatevl_mm_cubic(U,λ,v[l],Y[l]) for l in 1:length(Y)]
+function updatevl_mm_cubic(U,λ,vl,Yl)
+    d, k = size(U)
+    nl = size(Yl,2)
+
+    # Compute coefficients
+    α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
+    β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
+    γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
+
+    αb = sum(α[j] for j in 0:k if iszero(γ[j]))
+    βb = sum(β[j] for j in 0:k if iszero(γ[j]))
+    γb = sum(-1/(γ[j]+vl)+β[j]/(γ[j]+vl)^2 for j in 0:k if !iszero(γ[j]))
+    cb = sum(-2*β[j]/γ[j]^3 for j in 0:k if !iszero(γ[j]))
+    
+    complexroots = PolynomialRoots.solve_cubic_eq(complex.([βb,-αb,γb-cb*vl,cb]))
+    vcritical = [real(v) for v in complexroots if real(v) ≈ v && real(v) >= zero(vl)]
+
+    isempty(vcritical) && return zero(vl)
+    return _argmax(vcritical) do v
+        -αb*log(v) - βb/v + sum(-1/(γ[j]+vl)*v + β[j]/(γ[j]+vl)^2*v - β[j]/γ[j]^3*(v-vl)^2 for j in 0:k if !iszero(γ[j]))
+    end
 end
 
 # F updates

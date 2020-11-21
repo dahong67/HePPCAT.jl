@@ -4,7 +4,8 @@ using ForwardDiff, LinearAlgebra, StableRNGs, Test
 # Relevant functions
 using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, DifferenceOfConcave,
-    MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent
+    MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent,
+    QuadraticSolvableMinorizer, CubicSolvableMinorizer
 using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
 using HeteroscedasticPCA: LipBoundU1, LipBoundU2, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
@@ -65,6 +66,16 @@ n, v = (40, 10), (4, 1)
         @testset "updatev! (DifferenceOfConcave): t=$t" for t in 1:T
             vr = Ref.updatev_doc(MM[t].U,MM[t].λ,MM[t].v,Yb)
             Mb = updatev!(deepcopy(MM[t]),Yb,DifferenceOfConcave())
+            @test vr ≈ Mb.v
+        end
+        @testset "updatev! (QuadraticSolvableMinorizer): t=$t" for t in 1:T
+            vr = Ref.updatev_mm_quad(MM[t].U,MM[t].λ,MM[t].v,Yb)
+            Mb = updatev!(deepcopy(MM[t]),Yb,QuadraticSolvableMinorizer())
+            @test vr ≈ Mb.v
+        end
+        @testset "updatev! (CubicSolvableMinorizer): t=$t" for t in 1:T
+            vr = Ref.updatev_mm_cubic(MM[t].U,MM[t].λ,MM[t].v,Yb)
+            Mb = updatev!(deepcopy(MM[t]),Yb,CubicSolvableMinorizer())
             @test vr ≈ Mb.v
         end
         
@@ -226,6 +237,16 @@ n, v = (40, 10), (4, 1)
         @testset "updatev! (DifferenceOfConcave): t=$t" for t in 1:T
             vr = Ref.updatev_doc(MM[t].U,MM[t].λ,MM[t].v,Yf)
             Mf = updatev!(deepcopy(MM[t]),Yf,DifferenceOfConcave())
+            @test vr ≈ Mf.v
+        end
+        @testset "updatev! (QuadraticSolvableMinorizer): t=$t" for t in 1:T
+            vr = Ref.updatev_mm_quad(MM[t].U,MM[t].λ,MM[t].v,Yf)
+            Mf = updatev!(deepcopy(MM[t]),Yf,QuadraticSolvableMinorizer())
+            @test vr ≈ Mf.v
+        end
+        @testset "updatev! (CubicSolvableMinorizer): t=$t" for t in 1:T
+            vr = Ref.updatev_mm_cubic(MM[t].U,MM[t].λ,MM[t].v,Yf)
+            Mf = updatev!(deepcopy(MM[t]),Yf,CubicSolvableMinorizer())
             @test vr ≈ Mf.v
         end
         
