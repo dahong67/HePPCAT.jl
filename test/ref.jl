@@ -190,6 +190,8 @@ function geodesic(U,X,t)
 end
 
 # λ updates
+ispos(x) = x > zero(x)
+
 updateλ_roots(U,v,Y) = [updateλj_roots(uj,v,Y) for uj in eachcol(U)]
 function updateλj_roots(uj,v,Y)
     n, L = size.(Y,2), length(Y)
@@ -220,6 +222,7 @@ function updateλj_em(λj,uj,v,Y)
 end
 updateλ_mm(λ,U,v,Y) = [updateλj_mm(λj,uj,v,Y) for (λj,uj) in zip(λ,eachcol(U))]
 function updateλj_mm(λj,uj,v,Y)
+    all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
     n, L = size.(Y,2), length(Y)
 
     ζ = [norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) + n[l] for l in 1:L]

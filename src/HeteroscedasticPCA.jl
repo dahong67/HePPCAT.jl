@@ -318,6 +318,8 @@ function geodesic(U,X,t)
 end
 
 # λ updates
+ispos(x) = x > zero(x)
+
 function updateλ!(M::HPPCA,Y,method)
     for (j,uj) in enumerate(eachcol(M.U))
         M.λ[j] = updateλj(M.λ[j],uj,M.v,Y,method)
@@ -353,6 +355,7 @@ function updateλj(λj,uj,v,Y,::ExpectationMaximization)
     return λj * (num/den)^2
 end
 function updateλj(λj,uj,v,Y,::MinorizeMaximize)
+    all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
     n, L = size.(Y,2), length(Y)
 
     ζ = [norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) + n[l] for l in 1:L]
