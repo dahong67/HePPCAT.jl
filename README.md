@@ -1,4 +1,4 @@
-# HeteroscedasticPCA
+# HeteroscedasticPCA (todo: rename?)
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![Build Status](https://github.com/dahong67/HeteroscedasticPCA.jl/workflows/CI/badge.svg)](https://github.com/dahong67/HeteroscedasticPCA.jl/actions)
@@ -46,3 +46,9 @@
 + [ ] Run through `JuliaFormatter`
 + [ ] Test edge cases for the updates (e.g., cases where objective may evaluate to `+Inf`, `-Inf` or `NaN` or where root-finding may encounter issues)
 + [ ] Test convergence to critical points
++ [ ] Maybe have `LipBoundU1` and `LipBoundU2` take data and output a function mapping an iterate to Lipschitz bound (might be cleaner and allows for pre-computation)
++ [ ] **Rename to something like `HeterogeneousPCA.jl`**
++ [ ] Release as public and register!
++ [ ] Put data in update method objects to unify and speed up?
++ [ ] Add/test minorizers?
++ [ ] Test that MM updates maximize the minorizer by optimizing minorizer with off-the-shelf optimizer? (maybe use that as the reference implementation?)

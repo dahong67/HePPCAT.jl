@@ -4,7 +4,9 @@ using ForwardDiff, LinearAlgebra, StableRNGs, Test
 # Relevant functions
 using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, DifferenceOfConcave,
-    MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent
+    MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent,
+    QuadraticSolvableMinorizer, CubicSolvableMinorizer,
+    QuadraticMinorizer, OptimalQuadraticMinorizer
 using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
 using HeteroscedasticPCA: LipBoundU1, LipBoundU2, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
@@ -67,6 +69,16 @@ n, v = (40, 10), (4, 1)
             Mb = updatev!(deepcopy(MM[t]),Yb,DifferenceOfConcave())
             @test vr ≈ Mb.v
         end
+        @testset "updatev! (QuadraticSolvableMinorizer): t=$t" for t in 1:T
+            vr = Ref.updatev_mm_quad(MM[t].U,MM[t].λ,MM[t].v,Yb)
+            Mb = updatev!(deepcopy(MM[t]),Yb,QuadraticSolvableMinorizer())
+            @test vr ≈ Mb.v
+        end
+        @testset "updatev! (CubicSolvableMinorizer): t=$t" for t in 1:T
+            vr = Ref.updatev_mm_cubic(MM[t].U,MM[t].λ,MM[t].v,Yb)
+            Mb = updatev!(deepcopy(MM[t]),Yb,CubicSolvableMinorizer())
+            @test vr ≈ Mb.v
+        end
         
         # Test F updates
         @testset "updateF! (ExpectationMaximization): t=$t" for t in 1:T
@@ -100,6 +112,13 @@ n, v = (40, 10), (4, 1)
             # Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(InverseLipschitz()))  # LipBound2 depends on
             # @test Ur ≈ Mf.U                                                                                # how the blocks are done
         end
+        @testset "updateU! (ProjectedGradientAscent, Armijo): t=$t" for t in 1:T
+            Ur = Ref.updateU_pga_armijo(MM[t].U,MM[t].λ,MM[t].v,Yb,50,0.8,0.5,1e-4)
+            Mb = updateU!(deepcopy(MM[t]),Yb,ProjectedGradientAscent(ArmijoSearch(50,0.8,0.5,1e-4)))
+            @test Ur ≈ Mb.U
+            Mf = updateU!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ProjectedGradientAscent(ArmijoSearch(50,0.8,0.5,1e-4)))
+            @test Ur ≈ Mf.U
+        end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
             Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yb,50,0.8,0.5,0.5)
             Mb = updateU!(deepcopy(MM[t]),Yb,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,0.5)))
@@ -115,6 +134,41 @@ n, v = (40, 10), (4, 1)
             @test λr ≈ Mb.λ
             Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,RootFinding())
             @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (ExpectationMaximization): t=$t" for t in 1:T
+            λr = Ref.updateλ_em(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,ExpectationMaximization())
+            @test λr ≈ Mb.λ
+            Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,ExpectationMaximization())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (MinorizeMaximize): t=$t" for t in 1:T
+            λr = Ref.updateλ_mm(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,MinorizeMaximize())
+            @test λr ≈ Mb.λ
+            Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,MinorizeMaximize())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (QuadraticMinorizer): t=$t" for t in 1:T
+            λr = Ref.updateλ_quad(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,QuadraticMinorizer())
+            @test λr ≈ Mb.λ
+            Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,QuadraticMinorizer())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (DifferenceOfConcave): t=$t" for t in 1:T
+            λr = Ref.updateλ_doc(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,DifferenceOfConcave())
+            @test λr ≈ Mb.λ
+            Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,DifferenceOfConcave())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (OptimalQuadraticMinorizer): t=$t" for t in 1:T
+            λr = Ref.updateλ_opt_quad(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,OptimalQuadraticMinorizer())
+            @test λr ≈ Mb.λ
+            # Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,OptimalQuadraticMinorizer())  # Optimal curvature depends on
+            # @test λr ≈ Mf.λ                                                                # how the blocks are done
         end
         
         # Test F/gradF
@@ -207,6 +261,16 @@ n, v = (40, 10), (4, 1)
             Mf = updatev!(deepcopy(MM[t]),Yf,DifferenceOfConcave())
             @test vr ≈ Mf.v
         end
+        @testset "updatev! (QuadraticSolvableMinorizer): t=$t" for t in 1:T
+            vr = Ref.updatev_mm_quad(MM[t].U,MM[t].λ,MM[t].v,Yf)
+            Mf = updatev!(deepcopy(MM[t]),Yf,QuadraticSolvableMinorizer())
+            @test vr ≈ Mf.v
+        end
+        @testset "updatev! (CubicSolvableMinorizer): t=$t" for t in 1:T
+            vr = Ref.updatev_mm_cubic(MM[t].U,MM[t].λ,MM[t].v,Yf)
+            Mf = updatev!(deepcopy(MM[t]),Yf,CubicSolvableMinorizer())
+            @test vr ≈ Mf.v
+        end
         
         # Test F updates
         @testset "updateF! (ExpectationMaximization): t=$t" for t in 1:T
@@ -232,6 +296,11 @@ n, v = (40, 10), (4, 1)
             Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(InverseLipschitz()))
             @test Ur ≈ Mf.U
         end
+        @testset "updateU! (ProjectedGradientAscent, Armijo): t=$t" for t in 1:T
+            Ur = Ref.updateU_pga_armijo(MM[t].U,MM[t].λ,MM[t].v,Yf,100,0.8,0.5,1e-4)
+            Mf = updateU!(deepcopy(MM[t]),Yf,ProjectedGradientAscent(ArmijoSearch(100,0.8,0.5,1e-4)))
+            @test Ur ≈ Mf.U
+        end
         @testset "updateU! (StiefelGradientAscent): t=$t" for t in 1:T
             Ur = Ref.updateU_sga(MM[t].U,MM[t].λ,MM[t].v,Yf,50,0.8,0.5,0.5)
             Mf = updateU!(deepcopy(MM[t]),Yf,StiefelGradientAscent(ArmijoSearch(50,0.8,0.5,0.5)))
@@ -242,6 +311,31 @@ n, v = (40, 10), (4, 1)
         @testset "updateλ! (RootFinding): t=$t" for t in 1:T
             λr = Ref.updateλ_roots(MM[t].U,MM[t].v,Yf)
             Mf = updateλ!(deepcopy(MM[t]),Yf,RootFinding())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (ExpectationMaximization): t=$t" for t in 1:T
+            λr = Ref.updateλ_em(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,ExpectationMaximization())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (MinorizeMaximize): t=$t" for t in 1:T
+            λr = Ref.updateλ_mm(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,MinorizeMaximize())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (QuadraticMinorizer): t=$t" for t in 1:T
+            λr = Ref.updateλ_quad(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,QuadraticMinorizer())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (DifferenceOfConcave): t=$t" for t in 1:T
+            λr = Ref.updateλ_doc(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,DifferenceOfConcave())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (OptimalQuadraticMinorizer): t=$t" for t in 1:T
+            λr = Ref.updateλ_opt_quad(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,OptimalQuadraticMinorizer())
             @test λr ≈ Mf.λ
         end
         
