@@ -13,6 +13,7 @@ PolynomialRoots = "3a141323-8675-5d76-9d11-e1df1406c778"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 
 [compat]
+IdentityRanges = "0.3"
 IntervalArithmetic = "0.15, 0.16, 0.17"
 IntervalRootFinding = "0.5"
 PolynomialRoots = "1.0"
