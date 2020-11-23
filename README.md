@@ -49,3 +49,6 @@
 + [ ] Maybe have `LipBoundU1` and `LipBoundU2` take data and output a function mapping an iterate to Lipschitz bound (might be cleaner and allows for pre-computation)
 + [ ] **Rename to something like `HeterogeneousPCA.jl`**
 + [ ] Release as public and register!
++ [ ] Put data in update method objects to unify and speed up?
++ [ ] Add/test minorizers?
++ [ ] Test that MM updates maximize the minorizer by optimizing minorizer with off-the-shelf optimizer? (maybe use that as the reference implementation?)
