@@ -264,5 +264,25 @@ function updateλj_doc(λj,uj,v,Y)
     λmax = maximum(sqrt(ytj[l]/n[l]*(λj+v[l])) - v[l] for l in 1:L) + tol
     return find_zero(Ltp,(zero(λmax),λmax))
 end
+updateλ_opt_quad(λ,U,v,Y) = [updateλj_opt_quad(λj,uj,v,Y) for (λj,uj) in zip(λ,eachcol(U))]
+function updateλj_opt_quad(λj,uj,v,Y)
+    all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
+    n, L = size.(Y,2), length(Y)
+    
+    num = sum(1:L) do l
+        ytlj = norm(Y[l]'uj)^2
+        n[l]/(λj+v[l]) - ytlj/(λj+v[l])^2
+    end
+    den = sum(1:L) do l
+        ytlj = norm(Y[l]'uj)^2
+        a, b = n[l], ytlj
+        f = λ -> a*log(λ+v[l]) + b/(λ+v[l])
+        fd = λ -> a/(λ+v[l]) - b/(λ+v[l])^2
+        ctlj = (2b <= a*v[l]) ? zero(λj) : -2*(f(zero(λj)) - f(λj) + fd(λj)*λj)/λj^2
+        ctlj
+    end
+    
+    return max(zero(λj),λj + num/den)
+end
 
 end

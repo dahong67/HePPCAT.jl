@@ -56,6 +56,7 @@ struct DifferenceOfConcave end
 struct QuadraticSolvableMinorizer end
 struct CubicSolvableMinorizer end
 struct QuadraticMinorizer end
+struct OptimalQuadraticMinorizer end
 
 # Step sizes
 struct InverseLipschitz{T}
@@ -395,6 +396,25 @@ function updateλj(λj,uj,v,Y,::DifferenceOfConcave)
     tol = 1e-13  # to get a bracketing interval
     λmax = maximum(sqrt(ytj[l]/n[l]*(λj+v[l])) - v[l] for l in 1:L) + tol
     return find_zero(Ltp,(zero(λmax),λmax))
+end
+function updateλj(λj,uj,v,Y,::OptimalQuadraticMinorizer)
+    all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
+    n, L = size.(Y,2), length(Y)
+    
+    num = sum(1:L) do l
+        ytlj = norm(Y[l]'uj)^2
+        n[l]/(λj+v[l]) - ytlj/(λj+v[l])^2
+    end
+    den = sum(1:L) do l
+        ytlj = norm(Y[l]'uj)^2
+        a, b = n[l], ytlj
+        f = λ -> a*log(λ+v[l]) + b/(λ+v[l])
+        fd = λ -> a/(λ+v[l]) - b/(λ+v[l])^2
+        ctlj = (2b <= a*v[l]) ? zero(λj) : -2*(f(zero(λj)) - f(λj) + fd(λj)*λj)/λj^2
+        ctlj
+    end
+    
+    return max(zero(λj),λj + num/den)
 end
 
 end

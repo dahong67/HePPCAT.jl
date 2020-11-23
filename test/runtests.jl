@@ -6,7 +6,7 @@ using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, DifferenceOfConcave,
     MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent,
     QuadraticSolvableMinorizer, CubicSolvableMinorizer,
-    QuadraticMinorizer
+    QuadraticMinorizer, OptimalQuadraticMinorizer
 using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
 using HeteroscedasticPCA: LipBoundU1, LipBoundU2, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
@@ -162,6 +162,13 @@ n, v = (40, 10), (4, 1)
             @test λr ≈ Mb.λ
             Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,DifferenceOfConcave())
             @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (OptimalQuadraticMinorizer): t=$t" for t in 1:T
+            λr = Ref.updateλ_opt_quad(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,OptimalQuadraticMinorizer())
+            @test λr ≈ Mb.λ
+            # Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,OptimalQuadraticMinorizer())  # Optimal curvature depends on
+            # @test λr ≈ Mf.λ                                                                # how the blocks are done
         end
         
         # Test F/gradF
@@ -324,6 +331,11 @@ n, v = (40, 10), (4, 1)
         @testset "updateλ! (DifferenceOfConcave): t=$t" for t in 1:T
             λr = Ref.updateλ_doc(MM[t].λ,MM[t].U,MM[t].v,Yf)
             Mf = updateλ!(deepcopy(MM[t]),Yf,DifferenceOfConcave())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (OptimalQuadraticMinorizer): t=$t" for t in 1:T
+            λr = Ref.updateλ_opt_quad(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,OptimalQuadraticMinorizer())
             @test λr ≈ Mf.λ
         end
         
