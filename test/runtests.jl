@@ -156,6 +156,13 @@ n, v = (40, 10), (4, 1)
             Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,QuadraticMinorizer())
             @test λr ≈ Mf.λ
         end
+        @testset "updateλ! (DifferenceOfConcave): t=$t" for t in 1:T
+            λr = Ref.updateλ_doc(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,DifferenceOfConcave())
+            @test λr ≈ Mb.λ
+            Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,DifferenceOfConcave())
+            @test λr ≈ Mf.λ
+        end
         
         # Test F/gradF
         @testset "F/gradF: t=$t" for t in 1:T
@@ -312,6 +319,11 @@ n, v = (40, 10), (4, 1)
         @testset "updateλ! (QuadraticMinorizer): t=$t" for t in 1:T
             λr = Ref.updateλ_quad(MM[t].λ,MM[t].U,MM[t].v,Yf)
             Mf = updateλ!(deepcopy(MM[t]),Yf,QuadraticMinorizer())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (DifferenceOfConcave): t=$t" for t in 1:T
+            λr = Ref.updateλ_doc(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,DifferenceOfConcave())
             @test λr ≈ Mf.λ
         end
         

@@ -380,5 +380,21 @@ function updateλj(λj,uj,v,Y,::QuadraticMinorizer)
     
     return max(zero(λj),λj + num/den)
 end
+function updateλj(λj,uj,v,Y,::DifferenceOfConcave)
+    n, L = size.(Y,2), length(Y)
+    
+    # Compute coefficients and check edge case
+    ytj = [norm(Y[l]'uj)^2 for l in 1:L]
+    affslope = -sum(n[l]/(λj+v[l]) for l in 1:L)
+    Ltp = λ -> affslope + sum(ytj[l]/(λ+v[l])^2 for l in 1:L if !iszero(ytj[l]))
+    if affslope == -Inf || Ltp(zero(λj)) <= zero(λj)
+        return zero(λj)
+    end
+
+    # Return nonnegative critical point
+    tol = 1e-13  # to get a bracketing interval
+    λmax = maximum(sqrt(ytj[l]/n[l]*(λj+v[l])) - v[l] for l in 1:L) + tol
+    return find_zero(Ltp,(zero(λmax),λmax))
+end
 
 end
