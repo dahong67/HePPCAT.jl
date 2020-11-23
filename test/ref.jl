@@ -230,5 +230,22 @@ function updateλj_mm(λj,uj,v,Y)
     den = sum(ζ[l]/(λj+v[l]) for l in 1:L)
     return (1/sum(n)) * num / den
 end
+updateλ_quad(λ,U,v,Y) = [updateλj_quad(λj,uj,v,Y) for (λj,uj) in zip(λ,eachcol(U))]
+function updateλj_quad(λj,uj,v,Y)
+    all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
+    n, L = size.(Y,2), length(Y)
+    
+    num = sum(1:L) do l
+        ytlj = norm(Y[l]'uj)^2
+        n[l]/(λj+v[l]) - ytlj/(λj+v[l])^2
+    end
+    den = sum(1:L) do l
+        ytlj = norm(Y[l]'uj)^2
+        ctlj = -2*ytlj/v[l]^3
+        ctlj
+    end
+    
+    return max(zero(λj),λj + num/den)
+end
 
 end

@@ -5,7 +5,8 @@ using ForwardDiff, LinearAlgebra, StableRNGs, Test
 using HeteroscedasticPCA: HPPCA
 using HeteroscedasticPCA: ExpectationMaximization, DifferenceOfConcave,
     MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent,
-    QuadraticSolvableMinorizer, CubicSolvableMinorizer
+    QuadraticSolvableMinorizer, CubicSolvableMinorizer,
+    QuadraticMinorizer
 using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
 using HeteroscedasticPCA: LipBoundU1, LipBoundU2, loglikelihood
 using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
@@ -146,6 +147,13 @@ n, v = (40, 10), (4, 1)
             Mb = updateλ!(deepcopy(MM[t]),Yb,MinorizeMaximize())
             @test λr ≈ Mb.λ
             Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,MinorizeMaximize())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (QuadraticMinorizer): t=$t" for t in 1:T
+            λr = Ref.updateλ_quad(MM[t].λ,MM[t].U,MM[t].v,Yb)
+            Mb = updateλ!(deepcopy(MM[t]),Yb,QuadraticMinorizer())
+            @test λr ≈ Mb.λ
+            Mf = updateλ!(flatten(deepcopy(MM[t]),n[1:L]),Yf,QuadraticMinorizer())
             @test λr ≈ Mf.λ
         end
         
@@ -299,6 +307,11 @@ n, v = (40, 10), (4, 1)
         @testset "updateλ! (MinorizeMaximize): t=$t" for t in 1:T
             λr = Ref.updateλ_mm(MM[t].λ,MM[t].U,MM[t].v,Yf)
             Mf = updateλ!(deepcopy(MM[t]),Yf,MinorizeMaximize())
+            @test λr ≈ Mf.λ
+        end
+        @testset "updateλ! (QuadraticMinorizer): t=$t" for t in 1:T
+            λr = Ref.updateλ_quad(MM[t].λ,MM[t].U,MM[t].v,Yf)
+            Mf = updateλ!(deepcopy(MM[t]),Yf,QuadraticMinorizer())
             @test λr ≈ Mf.λ
         end
         
