@@ -143,9 +143,7 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
     β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
-    if all(iszero(β[j]) for j in 0:k if iszero(γ[j]))
-        return zero(vl)
-    end
+    all(iszero(β[j]) for j in 0:k if iszero(γ[j])) && return zero(vl)
 
     # Find nonnegative critical points
     tol = 1e-8  # todo: choose tolerance adaptively
@@ -193,14 +191,13 @@ function updatevl(vl,U,λ,Yl,::QuadraticSolvableMinorizer)
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
     β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
+    J0 = findall(iszero,γ)
+    αtl = sum(α[j] for j in J0)
+    βtl = sum(β[j] for j in J0)
+    ζtl = sum(α[j]/(γ[j]+vl) for j in 0:k if j ∉ J0)
+    B = βtl + sum(β[j]*vl^2/(γ[j]+vl)^2 for j in 0:k if j ∉ J0)
 
-    αb = sum(α[j] for j in 0:k if iszero(γ[j]))
-    βb = sum(β[j] for j in 0:k if iszero(γ[j]))
-
-    B = βb + sum(β[j]*vl^2/(γ[j]+vl)^2 for j in 0:k if !iszero(γ[j]))
-    C = sum(1/(γ[j]+vl) for j in 0:k if !iszero(γ[j]))
-    
-    return (-αb + sqrt(αb^2 + 4*C*B))/(2*C)
+    return (-αtl + sqrt(αtl^2 + 4*ζtl*B))/(2*ζtl)
 end
 function updatevl(vl,U,λ,Yl,::CubicSolvableMinorizer)
     d, k = size(U)
@@ -210,18 +207,20 @@ function updatevl(vl,U,λ,Yl,::CubicSolvableMinorizer)
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
     β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
+    c = [-2*β[j]/γ[j]^3 for j in IdentityRange(0:k)]
+    J0 = findall(iszero,γ)
+    αtl = sum(α[j] for j in J0)
+    βtl = sum(β[j] for j in J0)
+    ζtl = sum(α[j]/(γ[j]+vl) for j in 0:k if j ∉ J0)
+    γtl = -ζtl + sum(β[j]/(γ[j]+vl)^2 for j in 0:k if j ∉ J0)
+    ctl = sum(c[j] for j in 0:k if j ∉ J0)
 
-    αb = sum(α[j] for j in 0:k if iszero(γ[j]))
-    βb = sum(β[j] for j in 0:k if iszero(γ[j]))
-    γb = sum(-1/(γ[j]+vl)+β[j]/(γ[j]+vl)^2 for j in 0:k if !iszero(γ[j]))
-    cb = sum(-2*β[j]/γ[j]^3 for j in 0:k if !iszero(γ[j]))
-    
-    complexroots = PolynomialRoots.solve_cubic_eq(complex.([βb,-αb,γb-cb*vl,cb]))
+    complexroots = PolynomialRoots.solve_cubic_eq(complex.([βtl,-αtl,γtl-ctl*vl,ctl]))
     vcritical = [real(v) for v in complexroots if real(v) ≈ v && real(v) >= zero(vl)]
 
     isempty(vcritical) && return zero(vl)
     return _argmax(vcritical) do v
-        -αb*log(v) - βb/v + sum(-1/(γ[j]+vl)*v + β[j]/(γ[j]+vl)^2*v - β[j]/γ[j]^3*(v-vl)^2 for j in 0:k if !iszero(γ[j]))
+        -αtl*log(v) - βtl/v - ζtl*v + sum(β[j]/(γ[j]+vl)^2*v + (1/2)*c[j]*(v-vl)^2 for j in 0:k if j ∉ J0)
     end
 end
 
