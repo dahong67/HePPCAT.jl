@@ -49,8 +49,8 @@ n, v = (40, 10), (4, 1)
         MM = [HPPCA(randn(rng,d,k),rand(rng,L))]
         for t in 1:T
             push!(MM, deepcopy(MM[end]))
-            updatev!(MM[end],Yb,RootFinding())
             updateF!(MM[end],Yb,ExpectationMaximization())
+            updatev!(MM[end],Yb,RootFinding())
         end
         
         # Test v updates
@@ -241,8 +241,8 @@ n, v = (40, 10), (4, 1)
         MM = [HPPCA(randn(rng,d,k),rand(rng,sum(n[1:L])))]
         for t in 1:T
             push!(MM, deepcopy(MM[end]))
-            updatev!(MM[end],Yf,RootFinding())
             updateF!(MM[end],Yf,ExpectationMaximization())
+            updatev!(MM[end],Yf,RootFinding())
         end
         
         # Test v updates
