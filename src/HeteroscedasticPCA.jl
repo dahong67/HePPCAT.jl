@@ -140,8 +140,10 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
     nl = size(Yl,2)
 
     # Compute coefficients and check edge case
+    UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
+    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
-    β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
+    β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
     all(iszero(β[j]) for j in 0:k if iszero(γ[j])) && return zero(vl)
 
@@ -161,7 +163,7 @@ function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     d, k = size(U)
     nl = size(Yl,2)
 
-    UYl = vec(sum(abs2,U'Yl,dims=2))
+    UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
     return (sum(abs2,Yl) - 2*sum(λ./(λ.+vl) .* UYl) + sum((λ./(λ.+vl)).^2 .* UYl) + vl*nl*sum(λ./(λ.+vl)))/(d*nl)
 end
 function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
@@ -169,8 +171,10 @@ function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
     nl = size(Yl,2)
 
     # Compute coefficients and check edge case
+    UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
+    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
-    β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
+    β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
     affslope = -sum(α[j]/(γ[j]+vl) for j in 0:k if !iszero(α[j]))
     Ltp = v -> affslope + sum(β[j]/(γ[j]+v)^2 for j in 0:k if !iszero(β[j]))
@@ -188,8 +192,10 @@ function updatevl(vl,U,λ,Yl,::QuadraticSolvableMinorizer)
     nl = size(Yl,2)
 
     # Compute coefficients
+    UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
+    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
-    β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
+    β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
     J0 = findall(iszero,γ)
     αtl = sum(α[j] for j in J0)
@@ -204,8 +210,10 @@ function updatevl(vl,U,λ,Yl,::CubicSolvableMinorizer)
     nl = size(Yl,2)
 
     # Compute coefficients
+    UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
+    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
-    β = [j == 0 ? norm(Yl-U*U'Yl)^2/nl : norm(U[:,j]'Yl)^2/nl for j in IdentityRange(0:k)]
+    β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
     c = [-2*β[j]/γ[j]^3 for j in IdentityRange(0:k)]
     J0 = findall(iszero,γ)
