@@ -164,7 +164,12 @@ function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     nl = size(Yl,2)
 
     UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
-    return (sum(abs2,Yl) - 2*sum(λ./(λ.+vl) .* UYl) + sum((λ./(λ.+vl)).^2 .* UYl) + vl*nl*sum(λ./(λ.+vl)))/(d*nl)
+    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
+    β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
+    γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
+    
+    ρ = sum((oneunit(eltype(λ)).-γ./(γ.+vl)).^2 .* β) + vl*sum(λ./(λ.+vl))
+    return ρ/d
 end
 function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
     d, k = size(U)
