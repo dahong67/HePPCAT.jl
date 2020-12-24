@@ -4,28 +4,8 @@
 [![Build Status](https://github.com/dahong67/HeteroscedasticPCA.jl/workflows/CI/badge.svg)](https://github.com/dahong67/HeteroscedasticPCA.jl/actions)
 [![Coverage](https://codecov.io/gh/dahong67/HeteroscedasticPCA.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/dahong67/HeteroscedasticPCA.jl)
 
-## TODO
-
-+ [x] Copy implementations from previous code and get them running
-+ [x] Changes without numerical impact
-  + [x] Initial refactor using cleaner and more uniform signatures for updates (and make them mutating)
-  + [x] Some initial tests (that test `==` not `≈`) and benchmarks
-  + [x] Fix inconsistencies related to `θ` vs `θ2`
-  + [x] Try to further simplify the implementations but without changing the outputs
-+ [x] Changes with potential numerical impact
-  + [x] Remove old root-finding method `:oldflatroots`
-  + [x] Relax tests by testing updates individually on a few sets of iterates; testing the full iterative method may be too strict since numerical differences may accumulate.
-  + [x] Make all updates handle blocks correctly
-  + [x] Simplify implementations but now allowing for changes to the outputs up to precision type stuff
-  + [x] Work on `updateF!` - ~~can `Vt` be dropped?~~ decided to instead include `Vt` in the `HPPCA` type
-  + [x] New global maximization ideas for `v` and `θ` updates
-  + [x] ~~Use `geodesic` method from `Manifolds.jl`~~ (`Manifolds.jl` appears to have the "embedded geodesic" whereas we are using the one from the "canonical metric" discussed in `edelman1998tgo`)
 + [ ] Further enhancements
-  + [x] Give updates meaningful return values
-  + [x] Add all methods from paper
   + [ ] Add missing approaches: PGA line search, StGA constant step
-  + [x] Add tests to cover more cases (e.g., blocks vs. flat)
-  + [x] Make reference implementations for tests simple / easily checkable
   + [ ] Simplify/unify tests and benchmarks
   + [ ] Add docs
   + [ ] Improve speed
@@ -42,7 +22,6 @@
         + try version that clears the denominator but does not expand (i.e., don't form a polynomial in the canonical basis) - does the interval method somehow converge more slowly here due to the division?
     + Need to profile and understand where/why its slow
     + Maybe add specific implementations for this case
-  + [ ] ~~Consider contributing code for the canonical metric to `Manifolds.jl`~~
 + [ ] Run through `JuliaFormatter`
 + [ ] Test edge cases for the updates (e.g., cases where objective may evaluate to `+Inf`, `-Inf` or `NaN` or where root-finding may encounter issues)
 + [ ] Test convergence to critical points
