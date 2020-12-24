@@ -22,10 +22,10 @@
   + [x] ~~Use `geodesic` method from `Manifolds.jl`~~ (`Manifolds.jl` appears to have the "embedded geodesic" whereas we are using the one from the "canonical metric" discussed in `edelman1998tgo`)
 + [ ] Further enhancements
   + [x] Give updates meaningful return values
-  + [ ] Add all methods from paper
+  + [x] Add all methods from paper
   + [ ] Add missing approaches: PGA line search, StGA constant step
-  + [ ] Add tests to cover more cases (e.g., blocks vs. flat)
-  + [ ] Make reference implementations for tests simple / easily checkable
+  + [x] Add tests to cover more cases (e.g., blocks vs. flat)
+  + [x] Make reference implementations for tests simple / easily checkable
   + [ ] Simplify/unify tests and benchmarks
   + [ ] Add docs
   + [ ] Improve speed
@@ -42,7 +42,7 @@
         + try version that clears the denominator but does not expand (i.e., don't form a polynomial in the canonical basis) - does the interval method somehow converge more slowly here due to the division?
     + Need to profile and understand where/why its slow
     + Maybe add specific implementations for this case
-  + [ ] Consider contributing code for the canonical metric to `Manifolds.jl`
+  + [ ] ~~Consider contributing code for the canonical metric to `Manifolds.jl`~~
 + [ ] Run through `JuliaFormatter`
 + [ ] Test edge cases for the updates (e.g., cases where objective may evaluate to `+Inf`, `-Inf` or `NaN` or where root-finding may encounter issues)
 + [ ] Test convergence to critical points
