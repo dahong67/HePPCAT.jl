@@ -6,7 +6,7 @@
 
 Todo before registering:
 + [ ] external API
-+ [ ] split into smaller files
++ [x] split into smaller files
 + [ ] docstrings
 + [ ] run through `JuliaFormatter`
 + [ ] description in `README.md`
