@@ -1,5 +1,4 @@
-# λ updates
-ispos(x) = x > zero(x)
+## λ updates
 
 function updateλ!(M::HPPCA,Y,method)
     for (j,uj) in enumerate(eachcol(M.U))
@@ -7,6 +6,8 @@ function updateλ!(M::HPPCA,Y,method)
     end
     return M
 end
+
+# Update method: Global maximization via root-finding
 function updateλj(λj,uj,v,Y,::RootFinding)
     n, L = size.(Y,2), length(Y)
 
@@ -28,6 +29,8 @@ function updateλj(λj,uj,v,Y,::RootFinding)
         -sum(n[l]*log(λ+v[l]) + β[l]/(λ+v[l]) for l in 1:L)
     end
 end
+
+# Update method: Expectation Maximization
 function updateλj(λj,uj,v,Y,::ExpectationMaximization)
     n, L = size.(Y,2), length(Y)
 
@@ -35,6 +38,12 @@ function updateλj(λj,uj,v,Y,::ExpectationMaximization)
     den = sum(λj/(λj+v[l]) * (norm(Y[l]'uj)^2/v[l] * λj/(λj+v[l]) + n[l]) for l in 1:L)
     return λj * (num/den)^2
 end
+
+# Update method: Minorize maximize
+# using the minorizer from
+#   Y. Sun, A. Breloy, P. Babu, D. P. Palomar, F. Pascal, and G. Ginolhac,
+#   "Low-complexity algorithms for low rank clutter parameters estimation in radar systems,"
+#   IEEE Transactions on Signal Processing, vol. 64, no. 8, pp. 1986–1998, Apr. 2016.
 function updateλj(λj,uj,v,Y,::MinorizeMaximize)
     all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
     n, L = size.(Y,2), length(Y)
@@ -44,6 +53,8 @@ function updateλj(λj,uj,v,Y,::MinorizeMaximize)
     den = sum(ζ[l]/(λj+v[l]) for l in 1:L)
     return (1/sum(n)) * num / den
 end
+
+# Update method: Quadratic minorizer
 function updateλj(λj,uj,v,Y,::QuadraticMinorizer)
     all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
     n, L = size.(Y,2), length(Y)
@@ -60,6 +71,8 @@ function updateλj(λj,uj,v,Y,::QuadraticMinorizer)
     
     return max(zero(λj),λj + num/den)
 end
+
+# Update method: Difference of concave approach
 function updateλj(λj,uj,v,Y,::DifferenceOfConcave)
     n, L = size.(Y,2), length(Y)
     
@@ -76,6 +89,8 @@ function updateλj(λj,uj,v,Y,::DifferenceOfConcave)
     λmax = maximum(sqrt(ytj[l]/n[l]*(λj+v[l])) - v[l] for l in 1:L) + tol
     return find_zero(Ltp,(zero(λmax),λmax))
 end
+
+# Update method: Quadratic minorizer with optimized curvature
 function updateλj(λj,uj,v,Y,::OptimalQuadraticMinorizer)
     all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
     n, L = size.(Y,2), length(Y)
@@ -95,3 +110,6 @@ function updateλj(λj,uj,v,Y,::OptimalQuadraticMinorizer)
     
     return max(zero(λj),λj + num/den)
 end
+
+# Utilities
+ispos(x) = x > zero(x)

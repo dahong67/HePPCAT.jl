@@ -1,4 +1,6 @@
-# Types
+## Types
+
+# Model parameters (to be estimated)
 struct HPPCA{S<:Number,T<:Real}
     U::Matrix{S}   # eigvecs of FF' (factor/spike covariance)
     λ::Vector{T}   # eigvals of FF' (factor/spike covariance)
@@ -25,6 +27,7 @@ function HPPCA(F::AbstractMatrix,v::AbstractVector)
 end
 Base.:(==)(F::HPPCA, G::HPPCA) = all(f -> getfield(F, f) == getfield(G, f), 1:nfields(F))
 
+# Update methods
 struct RootFinding end
 struct ExpectationMaximization end
 struct MinorizeMaximize end

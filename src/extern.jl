@@ -1,4 +1,5 @@
-# PPCA
+## External interface
+
 function ppca(Y,k,iters,init,::Val{:sage})
     M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]

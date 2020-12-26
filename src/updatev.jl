@@ -1,10 +1,13 @@
-# v updates
+## v updates
+
 function updatev!(M::HPPCA,Y,method)
     for (l,Yl) in enumerate(Y)
         M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
     end
     return M
 end
+
+# Update method: Global maximization via root-finding
 function updatevl(vl,U,λ,Yl,::RootFinding)
     d, k = size(U)
     nl = size(Yl,2)
@@ -29,6 +32,8 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
         -(sum(α[j]*log(γ[j]+v) for j in 0:k if !iszero(α[j])) + sum(β[j]/(γ[j]+v) for j in 0:k if !iszero(β[j])))
     end
 end
+
+# Update method: Expectation Maximization
 function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     d, k = size(U)
     nl = size(Yl,2)
@@ -41,6 +46,8 @@ function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     ρ = sum((oneunit(eltype(λ)).-γ./(γ.+vl)).^2 .* β) + vl*sum(λ./(λ.+vl))
     return ρ/d
 end
+
+# Update method: Difference of concave approach
 function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
     d, k = size(U)
     nl = size(Yl,2)
@@ -62,6 +69,8 @@ function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
     vmax = maximum(sqrt(β[j]/α[j]*(γ[j]+vl)) - γ[j] for j in 0:k if !(iszero(α[j]) && iszero(β[j])))
     return find_zero(Ltp, (zero(vmax),vmax))
 end
+
+# Update method: Quadratic solvable minorizer
 function updatevl(vl,U,λ,Yl,::QuadraticSolvableMinorizer)
     d, k = size(U)
     nl = size(Yl,2)
@@ -80,6 +89,8 @@ function updatevl(vl,U,λ,Yl,::QuadraticSolvableMinorizer)
 
     return (-αtl + sqrt(αtl^2 + 4*ζtl*B))/(2*ζtl)
 end
+
+# Update method: Cubic solvable minorizer
 function updatevl(vl,U,λ,Yl,::CubicSolvableMinorizer)
     d, k = size(U)
     nl = size(Yl,2)

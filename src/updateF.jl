@@ -1,4 +1,6 @@
-# F updates
+## F updates
+
+# Update method: Expectation Maximization
 function updateF!(M::HPPCA,Y,::ExpectationMaximization)
     n, L = size.(Y,2), length(Y)
     Λ = Diagonal(M.λ)
