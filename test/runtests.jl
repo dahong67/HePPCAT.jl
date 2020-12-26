@@ -1,8 +1,8 @@
 using HeteroscedasticPPCA
 using ForwardDiff, LinearAlgebra, StableRNGs, Test
 
-# Relevant functions
-using HeteroscedasticPPCA: HetPPCA
+# Internal functions
+using HeteroscedasticPPCA: homppca
 using HeteroscedasticPPCA: ExpectationMaximization, DifferenceOfConcave,
     MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent,
     QuadraticSolvableMinorizer, CubicSolvableMinorizer,
@@ -43,6 +43,28 @@ n, v = (40, 10), (4, 1)
     F, Z = randn(rng,d,k), [randn(rng,k,n[l]) for l in 1:L]
     Yb = [F*Z[l] + sqrt(v[l])*randn(rng,d,n[l]) for l in 1:L]   # blocked
     Yf = reshape.(collect.(eachcol(hcat(Yb...))),:,1)           # flatten
+    
+    @testset "homoscedastic init" begin
+        Ur, λr, vr = Ref.homppca(Yb,k)
+        Mb = homppca(Yb,k)
+        @test Ur*Diagonal(λr)*Ur' ≈ Mb.U*Diagonal(Mb.λ)*Mb.U'
+        @test length(Mb.v) == length(Yb)
+        @test all(vr .≈ Mb.v)
+        Mf = homppca(Yf,k)
+        @test Ur*Diagonal(λr)*Ur' ≈ Mf.U*Diagonal(Mf.λ)*Mf.U'
+        @test length(Mf.v) == length(Yf)
+        @test all(vr .≈ Mf.v)
+    end
+    
+    @testset "overall function" begin
+        Mr = homppca(Yb,k)
+        for _ in 1:T
+            updatev!(Mr,Yb,ExpectationMaximization())
+            updateF!(Mr,Yb,ExpectationMaximization())
+        end
+        @test Mr !== hetppca(Yb,k,T)
+        @test Mr == hetppca(Yb,k,T)
+    end
     
     @testset "block calls" begin
         # Generate sequence of test iterates

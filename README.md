@@ -5,7 +5,7 @@
 [![Coverage](https://codecov.io/gh/dahong67/HeteroscedasticPPCA.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/dahong67/HeteroscedasticPPCA.jl)
 
 Todo before registering:
-+ [ ] external API
++ [x] external API
 + [x] split into smaller files
 + [ ] docstrings
 + [ ] run through `JuliaFormatter`
@@ -13,6 +13,7 @@ Todo before registering:
 + [x] rename to `HeteroscedasticPPCA.jl`
 
 Further enhancements:
++ [ ] do we correctly handle `d > n` (including in init)?
 + [ ] Conditionally load `IntervalArithmetic` and `IntervalRootFinding` (appear responsible for much of the loading time)
 + [ ] Add missing approaches: PGA line search, StGA constant step
 + [ ] Simplify/unify tests and benchmarks

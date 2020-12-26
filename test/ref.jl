@@ -3,10 +3,11 @@ module Ref
 using IdentityRanges: IdentityRange
 using IntervalArithmetic: interval, mid
 using IntervalRootFinding: Newton, roots
-using LinearAlgebra: Diagonal, I, opnorm, norm, qr, svd, tr, /
+using LinearAlgebra: Diagonal, Hermitian, I, eigen, opnorm, norm, qr, svd, tr, /
 using Logging: @debug
 import PolynomialRoots
 using Roots: find_zero
+using Statistics: mean
 
 # findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705
 # argmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L830
@@ -14,6 +15,15 @@ using Roots: find_zero
 _findmax(f, domain) = mapfoldl(x -> (f(x), x), _rf_findmax, domain)
 _rf_findmax((fm, m), (fx, x)) = isless(fm, fx) ? (fx, x) : (fm, m)
 _argmax(f, domain) = _findmax(f, domain)[2]
+
+# Homoscedastic init
+function homppca(Y,k)
+    Yflat = reduce(hcat,Y)
+    d, n = size(Yflat)
+    λh, Uh = eigen(Hermitian(Yflat*Yflat'/n),sortby=-)
+    λb = mean(λh[k+1:d])
+    return Uh[:,1:k], λh[1:k] .- λb, λb
+end
 
 # log-likelihood (todo: add constant)
 function loglikelihood(U,λ,v,Y)

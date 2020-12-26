@@ -9,9 +9,10 @@ using LinearAlgebra: Diagonal, I, opnorm, norm, qr, svd, /
 using Logging: @warn
 import PolynomialRoots
 using Roots: find_zero
+using Statistics: mean
 
 # Exports
-# todo
+export HetPPCA, hetppca, loglikelihood
 
 # More convenient form of argmax not yet available
 # + findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705

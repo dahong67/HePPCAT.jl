@@ -3,6 +3,8 @@ using Random, LinearAlgebra
 
 const SUITE = BenchmarkGroup()
 
+## todo: rework to benchmark individual updates instead
+
 # SAGE
 SUITE["sage"] = BenchmarkGroup()
 rng = MersenneTwister(123)

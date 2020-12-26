@@ -1,50 +1,23 @@
 ## External interface
 
-function ppca(Y,k,iters,init,::Val{:sage})
-    M = HetPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
-    MM = [deepcopy(M)]
-    for t = 1:iters
-        updatev!(M,Y,RootFinding())
+# Main function
+function hetppca(Y,k,iters;init=homppca(Y,k))
+    M = init
+    for _ in 1:iters
+        updatev!(M,Y,ExpectationMaximization())
         updateF!(M,Y,ExpectationMaximization())
-        push!(MM, deepcopy(M))
     end
-    return getfield.(MM,:U), getfield.(MM, :λ), getfield.(MM,:v)
+    M
 end
-function ppca(Y,k,iters,init,::Val{:mm})
-    M = HetPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
-    MM = [deepcopy(M)]
-    for t = 1:iters
-        updatev!(M,Y,RootFinding())
-        updateλ!(M,Y,RootFinding())
-        updateU!(M,Y,MinorizeMaximize())
-        push!(MM,deepcopy(M))
-    end
-    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
-end
-function ppca(Y,k,iters,init,::Val{:pgd})
-    Ynorms = vec(mapslices(norm,hcat(Y...),dims=1))
-    M = HetPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
-    MM = [deepcopy(M)]
-    for t = 1:iters
-        updatev!(M,Y,RootFinding())
-        updateλ!(M,Y,RootFinding())
-        L = sum(ynorm^2*maximum([λj/vi/(λj+vi) for λj in M.λ])
-            for (ynorm,vi) in zip(Ynorms,M.v))
-        updateU!(M,Y,ProjectedGradientAscent(1/L))
-        push!(MM,deepcopy(M))
-    end
-    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
-end
-function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
-    M = HetPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
-    MM = [deepcopy(M)]
-    for t = 1:iters
-        updatev!(M,Y,RootFinding())
-        updateλ!(M,Y,RootFinding())
-        updateU!(M,Y,StiefelGradientAscent(ArmijoSearch(max_line,α,β,σ)))
-        push!(MM,deepcopy(M))
-    end
-    return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
+
+# Homoscedastic initialization
+function homppca(Y,k)
+    Yf = reduce(hcat,Y)
+    n, L = size(Yf,2), length(Y)
+    Uh, s, _ = svd(Yf)
+    λh = abs2.(s)./n
+    λb = mean(λh[k+1:end])
+    HetPPCA(Uh[:,1:k],λh[1:k] .- λb,I(k),fill(λb,L))
 end
 
 # log-likelihood (todo: add constant)
