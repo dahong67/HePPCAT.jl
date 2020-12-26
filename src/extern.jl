@@ -21,7 +21,7 @@ function homppca(Y,k)
 end
 
 # log-likelihood (todo: add constant)
-function loglikelihood(M,Y)
+function loglikelihood(M::HetPPCA,Y)
     d, k = size(M.U)
     n, L = size.(Y,2), length(Y)
     return 1/2*sum(1:L) do l
