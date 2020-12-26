@@ -1,15 +1,15 @@
-using HeteroscedasticPCA
+using HeteroscedasticPPCA
 using ForwardDiff, LinearAlgebra, StableRNGs, Test
 
 # Relevant functions
-using HeteroscedasticPCA: HetPPCA
-using HeteroscedasticPCA: ExpectationMaximization, DifferenceOfConcave,
+using HeteroscedasticPPCA: HetPPCA
+using HeteroscedasticPPCA: ExpectationMaximization, DifferenceOfConcave,
     MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent,
     QuadraticSolvableMinorizer, CubicSolvableMinorizer,
     QuadraticMinorizer, OptimalQuadraticMinorizer
-using HeteroscedasticPCA: ArmijoSearch, InverseLipschitz
-using HeteroscedasticPCA: LipBoundU1, LipBoundU2, loglikelihood
-using HeteroscedasticPCA: updateF!, updatev!, updateU!, updateλ!
+using HeteroscedasticPPCA: ArmijoSearch, InverseLipschitz
+using HeteroscedasticPPCA: LipBoundU1, LipBoundU2, loglikelihood
+using HeteroscedasticPPCA: updateF!, updatev!, updateU!, updateλ!
 
 # Flag to use automatic differentiation
 const TEST_WITH_AD = false
@@ -175,19 +175,19 @@ n, v = (40, 10), (4, 1)
         @testset "F/gradF: t=$t" for t in 1:T
             vf = vcat(fill.(MM[t].v,n[1:L])...)
             Fr = Ref.F(MM[t].U,MM[t].λ,vf,Yf)
-            Fb = HeteroscedasticPCA.F(MM[t].U,MM[t].λ,MM[t].v,Yb)
+            Fb = HeteroscedasticPPCA.F(MM[t].U,MM[t].λ,MM[t].v,Yb)
             @test Fr ≈ Fb
-            Ff = HeteroscedasticPCA.F(MM[t].U,MM[t].λ,vf,Yf)
+            Ff = HeteroscedasticPPCA.F(MM[t].U,MM[t].λ,vf,Yf)
             @test Fr ≈ Ff
 
             LLr = [Ref.loglikelihood(U,MM[t].λ,vf,Yf) for U in getfield.(MM,:U)]
-            Fb = [HeteroscedasticPCA.F(U,MM[t].λ,MM[t].v,Yb) for U in getfield.(MM,:U)]
+            Fb = [HeteroscedasticPPCA.F(U,MM[t].λ,MM[t].v,Yb) for U in getfield.(MM,:U)]
             @test LLr ≈ Fb .+ (LLr[1] - Fb[1])    # "values match up to a constant w.r.t U"
             
             Gr = Ref.gradF(MM[t].U,MM[t].λ,vf,Yf)
-            Gb = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yb)
+            Gb = HeteroscedasticPPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yb)
             @test Gr ≈ Gb
-            Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,vf,Yf)
+            Gf = HeteroscedasticPPCA.gradF(MM[t].U,MM[t].λ,vf,Yf)
             @test Gr ≈ Gf
 
             if TEST_WITH_AD
@@ -342,15 +342,15 @@ n, v = (40, 10), (4, 1)
         # Test F/gradF
         @testset "F/gradF: t=$t" for t in 1:T
             Fr = Ref.F(MM[t].U,MM[t].λ,MM[t].v,Yf)
-            Ff = HeteroscedasticPCA.F(MM[t].U,MM[t].λ,MM[t].v,Yf)
+            Ff = HeteroscedasticPPCA.F(MM[t].U,MM[t].λ,MM[t].v,Yf)
             @test Fr ≈ Ff
 
             LLr = [Ref.loglikelihood(U,MM[t].λ,MM[t].v,Yf) for U in getfield.(MM,:U)]
-            Ff = [HeteroscedasticPCA.F(U,MM[t].λ,MM[t].v,Yf) for U in getfield.(MM,:U)]
+            Ff = [HeteroscedasticPPCA.F(U,MM[t].λ,MM[t].v,Yf) for U in getfield.(MM,:U)]
             @test LLr ≈ Ff .+ (LLr[1] - Ff[1])    # "values match up to a constant w.r.t U"
             
             Gr = Ref.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
-            Gf = HeteroscedasticPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
+            Gf = HeteroscedasticPPCA.gradF(MM[t].U,MM[t].λ,MM[t].v,Yf)
             @test Gr ≈ Gf
 
             if TEST_WITH_AD
@@ -398,8 +398,8 @@ end
 @testset "skew" begin
     rng = StableRNG(123)
     @testset "random $n x $n matrix" for n in 1:20
-        A = HeteroscedasticPCA.skew(randn(rng,n,n))
-        @test A == HeteroscedasticPCA.skew(A)
+        A = HeteroscedasticPPCA.skew(randn(rng,n,n))
+        @test A == HeteroscedasticPPCA.skew(A)
         @test A == -A'
     end
 end

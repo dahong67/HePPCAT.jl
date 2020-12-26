@@ -1,8 +1,8 @@
-# HeteroscedasticPCA (todo: rename?)
+# HeteroscedasticPPCA (todo: rename?)
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![Build Status](https://github.com/dahong67/HeteroscedasticPCA.jl/workflows/CI/badge.svg)](https://github.com/dahong67/HeteroscedasticPCA.jl/actions)
-[![Coverage](https://codecov.io/gh/dahong67/HeteroscedasticPCA.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/dahong67/HeteroscedasticPCA.jl)
+[![Build Status](https://github.com/dahong67/HeteroscedasticPPCA.jl/workflows/CI/badge.svg)](https://github.com/dahong67/HeteroscedasticPPCA.jl/actions)
+[![Coverage](https://codecov.io/gh/dahong67/HeteroscedasticPPCA.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/dahong67/HeteroscedasticPPCA.jl)
 
 Todo before registering:
 + [ ] external API
@@ -10,7 +10,7 @@ Todo before registering:
 + [ ] docstrings
 + [ ] run through `JuliaFormatter`
 + [ ] description in `README.md`
-+ [ ] rename to something like `HeterogeneousPCA.jl`
++ [x] rename to `HeteroscedasticPPCA.jl`
 
 Further enhancements:
 + [ ] Add missing approaches: PGA line search, StGA constant step

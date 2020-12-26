@@ -1,4 +1,4 @@
-module HeteroscedasticPCA
+module HeteroscedasticPPCA
 
 # Imports
 using Base: IdentityUnitRange   # todo: swap with IdentityRanges.IdentityRange if working (https://github.com/JuliaArrays/IdentityRanges.jl/issues/12)
