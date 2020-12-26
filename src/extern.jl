@@ -1,6 +1,18 @@
 ## External interface
 
 # Main function
+"""
+    hetppca(Y,k,iters;init=homppca(Y,k))
+
+Estimate probabilistic PCA model for noise that is heteroscedastic across samples.
+
+Inputs are:
++ `Y` : list of matrices (each column is a sample)
++ `k` : number of factors
++ `iters` : number of iterations to run
++ `init`  : initial model (will be modified in-place)
+Output is a [`HetPPCA`](@ref) object.
+"""
 function hetppca(Y,k,iters;init=homppca(Y,k))
     M = init
     for _ in 1:iters
@@ -11,6 +23,16 @@ function hetppca(Y,k,iters;init=homppca(Y,k))
 end
 
 # Homoscedastic initialization
+"""
+    homppca(Y,k)
+
+Estimate probabilistic PCA model for noise that is homoscedastic across samples.
+
+Inputs are:
++ `Y` : list of matrices (each column is a sample)
++ `k` : number of factors
+Output is a [`HetPPCA`](@ref) object.
+"""
 function homppca(Y,k)
     Yf = reduce(hcat,Y)
     n, L = size(Yf,2), length(Y)
@@ -21,6 +43,11 @@ function homppca(Y,k)
 end
 
 # log-likelihood (todo: add constant)
+"""
+    loglikelihood(M::HetPPCA,Y)
+
+Log-likelihood of model `M` with respect to data `Y` (dropping constant term).
+"""
 function loglikelihood(M::HetPPCA,Y)
     d, k = size(M.U)
     n, L = size.(Y,2), length(Y)

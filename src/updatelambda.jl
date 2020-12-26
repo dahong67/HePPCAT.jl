@@ -1,5 +1,11 @@
 ## λ updates
 
+"""
+    updateλ!(M::HetPPCA,Y,method)
+
+Update the factor eigenvalues `M.λ` with respect to data `Y` using `method`.
+Internally calls [`updateλj(_)`](@ref) to update each entry.
+"""
 function updateλ!(M::HetPPCA,Y,method)
     for (j,uj) in enumerate(eachcol(M.U))
         M.λ[j] = updateλj(M.λ[j],uj,M.v,Y,method)
@@ -7,7 +13,19 @@ function updateλ!(M::HetPPCA,Y,method)
     return M
 end
 
+"""
+    updateλj(λj,uj,v,Y,method)
+
+Compute update for `j`th factor eigenvalue `λj` with respect to data `Y` using `method`.
+"""
+function updateλj end
+
 # Update method: Global maximization via root-finding
+"""
+    updateλj(λj,uj,v,Y,::RootFinding)
+
+Root-finding (global maximization) update of `λj`.
+"""
 function updateλj(λj,uj,v,Y,::RootFinding)
     n, L = size.(Y,2), length(Y)
 
@@ -31,6 +49,11 @@ function updateλj(λj,uj,v,Y,::RootFinding)
 end
 
 # Update method: Expectation Maximization
+"""
+    updateλj(λj,uj,v,Y,::ExpectationMaximization)
+
+Expectation maximization update of `λj`.
+"""
 function updateλj(λj,uj,v,Y,::ExpectationMaximization)
     n, L = size.(Y,2), length(Y)
 
@@ -44,6 +67,14 @@ end
 #   Y. Sun, A. Breloy, P. Babu, D. P. Palomar, F. Pascal, and G. Ginolhac,
 #   "Low-complexity algorithms for low rank clutter parameters estimation in radar systems,"
 #   IEEE Transactions on Signal Processing, vol. 64, no. 8, pp. 1986–1998, Apr. 2016.
+"""
+    updateλj(λj,uj,v,Y,::MinorizeMaximize)
+
+Minorize maximize update of `λj` using the minorizer from
+> Y. Sun, A. Breloy, P. Babu, D. P. Palomar, F. Pascal, and G. Ginolhac,
+> "Low-complexity algorithms for low rank clutter parameters estimation in radar systems,"
+> IEEE Transactions on Signal Processing, vol. 64, no. 8, pp. 1986–1998, Apr. 2016.
+"""
 function updateλj(λj,uj,v,Y,::MinorizeMaximize)
     all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
     n, L = size.(Y,2), length(Y)
@@ -55,6 +86,11 @@ function updateλj(λj,uj,v,Y,::MinorizeMaximize)
 end
 
 # Update method: Quadratic minorizer
+"""
+    updateλj(λj,uj,v,Y,::QuadraticMinorizer)
+
+Minorize maximize update of `λj` using quadratic minorizer.
+"""
 function updateλj(λj,uj,v,Y,::QuadraticMinorizer)
     all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
     n, L = size.(Y,2), length(Y)
@@ -73,6 +109,11 @@ function updateλj(λj,uj,v,Y,::QuadraticMinorizer)
 end
 
 # Update method: Difference of concave approach
+"""
+    updateλj(λj,uj,v,Y,::DifferenceOfConcave)
+
+Difference of concave update of `λj`.
+"""
 function updateλj(λj,uj,v,Y,::DifferenceOfConcave)
     n, L = size.(Y,2), length(Y)
     
@@ -91,6 +132,11 @@ function updateλj(λj,uj,v,Y,::DifferenceOfConcave)
 end
 
 # Update method: Quadratic minorizer with optimized curvature
+"""
+    updateλj(λj,uj,v,Y,::OptimalQuadraticMinorizer)
+
+Minorize maximize update of `λj` using quadratic minorizer with optimized curvature.
+"""
 function updateλj(λj,uj,v,Y,::OptimalQuadraticMinorizer)
     all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
     n, L = size.(Y,2), length(Y)

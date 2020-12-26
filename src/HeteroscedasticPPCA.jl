@@ -1,3 +1,4 @@
+"Heteroscedastic PPCA module. Provides probabilistic PCA for data with heterogeneous quality (heteroscedastic noise)."
 module HeteroscedasticPPCA
 
 # Imports

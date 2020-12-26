@@ -1,5 +1,11 @@
 ## v updates
 
+"""
+    updatev!(M::HetPPCA,Y,method)
+
+Update the noise variances `M.v` with respect to data `Y` using `method`.
+Internally calls [`updatevl(_)`](@ref) to update each entry.
+"""
 function updatev!(M::HetPPCA,Y,method)
     for (l,Yl) in enumerate(Y)
         M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
@@ -7,7 +13,19 @@ function updatev!(M::HetPPCA,Y,method)
     return M
 end
 
+"""
+    updatevl(vl,U,λ,Yl,method)
+
+Compute update for `l`th noise variance `vl` with respect to data `Yl` using `method`.
+"""
+function updatevl end
+
 # Update method: Global maximization via root-finding
+"""
+    updatevl(vl,U,λ,Yl,::RootFinding)
+
+Root-finding (global maximization) update of `vl`.
+"""
 function updatevl(vl,U,λ,Yl,::RootFinding)
     d, k = size(U)
     nl = size(Yl,2)
@@ -34,6 +52,11 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
 end
 
 # Update method: Expectation Maximization
+"""
+    updatevl(vl,U,λ,Yl,::ExpectationMaximization)
+
+Expectation maximization update of `vl`.
+"""
 function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     d, k = size(U)
     nl = size(Yl,2)
@@ -48,6 +71,11 @@ function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
 end
 
 # Update method: Difference of concave approach
+"""
+    updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
+
+Difference of concave update of `vl`.
+"""
 function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
     d, k = size(U)
     nl = size(Yl,2)
@@ -71,6 +99,11 @@ function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
 end
 
 # Update method: Quadratic solvable minorizer
+"""
+    updatevl(vl,U,λ,Yl,::QuadraticSolvableMinorizer)
+
+Minorize maximize update of `vl` with quadratic solvable minorizer.
+"""
 function updatevl(vl,U,λ,Yl,::QuadraticSolvableMinorizer)
     d, k = size(U)
     nl = size(Yl,2)
@@ -91,6 +124,11 @@ function updatevl(vl,U,λ,Yl,::QuadraticSolvableMinorizer)
 end
 
 # Update method: Cubic solvable minorizer
+"""
+    updatevl(vl,U,λ,Yl,::CubicSolvableMinorizer)
+
+Minorize maximize update of `vl` with cubic solvable minorizer.
+"""
 function updatevl(vl,U,λ,Yl,::CubicSolvableMinorizer)
     d, k = size(U)
     nl = size(Yl,2)

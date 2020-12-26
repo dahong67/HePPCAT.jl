@@ -1,6 +1,18 @@
 ## F updates
 
+"""
+    updateF!(M::HetPPCA,Y,method)
+
+Update the factor matrix in `M` with respect to data `Y` using `method`.
+"""
+function updateF! end
+
 # Update method: Expectation Maximization
+"""
+    updateF!(M::HetPPCA,Y,::ExpectationMaximization)
+
+Expectation maximization update of `F`.
+"""
 function updateF!(M::HetPPCA,Y,::ExpectationMaximization)
     n, L = size.(Y,2), length(Y)
     Λ = Diagonal(M.λ)

@@ -7,7 +7,7 @@
 Todo before registering:
 + [x] external API
 + [x] split into smaller files
-+ [ ] docstrings
++ [x] docstrings
 + [ ] run through `JuliaFormatter`
 + [ ] description in `README.md`
 + [x] rename to `HeteroscedasticPPCA.jl`
