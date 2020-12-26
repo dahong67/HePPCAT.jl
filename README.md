@@ -13,6 +13,7 @@ Todo before registering:
 + [x] rename to `HeteroscedasticPPCA.jl`
 
 Further enhancements:
++ [ ] Conditionally load `IntervalArithmetic` and `IntervalRootFinding` (appear responsible for much of the loading time)
 + [ ] Add missing approaches: PGA line search, StGA constant step
 + [ ] Simplify/unify tests and benchmarks
 + [ ] Improve speed
