@@ -85,29 +85,6 @@ function updateλj(λj,uj,v,Y,::MinorizeMaximize)
     return (1/sum(n)) * num / den
 end
 
-# Update method: Quadratic minorizer
-"""
-    updateλj(λj,uj,v,Y,::QuadraticMinorizer)
-
-Minorize maximize update of `λj` using quadratic minorizer.
-"""
-function updateλj(λj,uj,v,Y,::QuadraticMinorizer)
-    all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
-    n, L = size.(Y,2), length(Y)
-    
-    num = sum(1:L) do l
-        ytlj = norm(Y[l]'uj)^2
-        n[l]/(λj+v[l]) - ytlj/(λj+v[l])^2
-    end
-    den = sum(1:L) do l
-        ytlj = norm(Y[l]'uj)^2
-        ctlj = -2*ytlj/v[l]^3
-        ctlj
-    end
-    
-    return max(zero(λj),λj + num/den)
-end
-
 # Update method: Difference of concave approach
 """
     updateλj(λj,uj,v,Y,::DifferenceOfConcave)
@@ -129,6 +106,29 @@ function updateλj(λj,uj,v,Y,::DifferenceOfConcave)
     tol = 1e-13  # to get a bracketing interval
     λmax = maximum(sqrt(ytj[l]/n[l]*(λj+v[l])) - v[l] for l in 1:L) + tol
     return find_zero(Ltp,(zero(λmax),λmax))
+end
+
+# Update method: Quadratic minorizer
+"""
+    updateλj(λj,uj,v,Y,::QuadraticMinorizer)
+
+Minorize maximize update of `λj` using quadratic minorizer.
+"""
+function updateλj(λj,uj,v,Y,::QuadraticMinorizer)
+    all(ispos,v) || throw("Minorizer expects positive v. Got: $v")
+    n, L = size.(Y,2), length(Y)
+    
+    num = sum(1:L) do l
+        ytlj = norm(Y[l]'uj)^2
+        n[l]/(λj+v[l]) - ytlj/(λj+v[l])^2
+    end
+    den = sum(1:L) do l
+        ytlj = norm(Y[l]'uj)^2
+        ctlj = -2*ytlj/v[l]^3
+        ctlj
+    end
+    
+    return max(zero(λj),λj + num/den)
 end
 
 # Update method: Quadratic minorizer with optimized curvature

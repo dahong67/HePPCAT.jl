@@ -90,18 +90,18 @@ end
 
 # Objective with respect to U
 """
-    gradF(U,λ,v,Y)
-
-Euclidean gradient of objective for the optimization problem w.r.t `U`.
-"""
-gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in zip(Y,v))
-
-"""
     F(U,λ,v,Y)
 
 Objective for the optimization problem w.r.t `U`.
 """
 F(U,λ,v,Y) = 1/2*sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in zip(Y,v))
+
+"""
+    gradF(U,λ,v,Y)
+
+Euclidean gradient of objective for the optimization problem w.r.t `U`.
+"""
+gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in zip(Y,v))
 
 """
     LipBoundU1(M::HetPPCA,Y)
