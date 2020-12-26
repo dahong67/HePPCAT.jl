@@ -26,6 +26,19 @@ function HetPPCA(F::AbstractMatrix,v::AbstractVector)
     return HetPPCA(U,s.^2,V',v)
 end
 Base.:(==)(F::HetPPCA, G::HetPPCA) = all(f -> getfield(F, f) == getfield(G, f), 1:nfields(F))
+function Base.getproperty(M::HetPPCA, d::Symbol)
+    if d === :F
+        U = getfield(M, :U)
+        λ = getfield(M, :λ)
+        Vt = getfield(M, :Vt)
+        return U*sqrt(Diagonal(λ))*Vt
+    else
+        return getfield(M, d)
+    end
+end
+
+Base.propertynames(M::HetPPCA, private::Bool=false) =
+    private ? (:F, fieldnames(typeof(M))...) : (:F, :U, :λ, :Vt, :v)
 
 # Update methods
 struct RootFinding end

@@ -21,8 +21,8 @@ include("ref.jl")
 factormatrix(M::HetPPCA) = M.U*sqrt(Diagonal(M.λ))*M.Vt
 flatten(M::HetPPCA,n) = HetPPCA(M.U,M.λ,M.Vt,vcat(fill.(M.v,n)...))
 
-# Test convenience constructors and equality
-@testset "Constructors" begin
+# Test HetPPCA type
+@testset "HetPPCA type" begin
     rng = StableRNG(123)
     d, k, v = 10, 3, [4.0,2.0]
     F = randn(rng,d,k)
@@ -32,6 +32,7 @@ flatten(M::HetPPCA,n) = HetPPCA(M.U,M.λ,M.Vt,vcat(fill.(M.v,n)...))
     @test HetPPCA(U,λ,V',v) == HetPPCA(U,λ,V',Int.(v))
     @test HetPPCA(U,λ,Matrix{Float64}(I,k,k),v) == HetPPCA(U,λ,I(k),v)
     @test HetPPCA(U,λ,V',v) == HetPPCA(F,v)
+    @test HetPPCA(U,λ,V',v).F ≈ F
 end
 
 # Test all updates
