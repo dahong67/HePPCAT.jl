@@ -1,13 +1,13 @@
 ## U updates
 
 # Update method: Minorize Maximize (with linear minorizer)
-function updateU!(M::HPPCA,Y,::MinorizeMaximize)
+function updateU!(M::HetPPCA,Y,::MinorizeMaximize)
     M.U .= polar(gradF(M.U,M.λ,M.v,Y))
     return M
 end
 
 # Update method: Projected Gradient Ascent
-function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:Number})
+function updateU!(M::HetPPCA,Y,pga::ProjectedGradientAscent{<:Number})
     if pga.stepsize == Inf
         M.U .= polar(gradF(M.U,M.λ,M.v,Y))
     else
@@ -15,10 +15,10 @@ function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:Number})
     end
     return M
 end
-function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:InverseLipschitz})
+function updateU!(M::HetPPCA,Y,pga::ProjectedGradientAscent{<:InverseLipschitz})
     return updateU!(M,Y,ProjectedGradientAscent(inv(pga.stepsize.bound(M,Y))))
 end
-function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:ArmijoSearch})
+function updateU!(M::HetPPCA,Y,pga::ProjectedGradientAscent{<:ArmijoSearch})
     params = pga.stepsize
     
     dFdU = gradF(M.U,M.λ,M.v,Y)
@@ -38,7 +38,7 @@ function updateU!(M::HPPCA,Y,pga::ProjectedGradientAscent{<:ArmijoSearch})
 end
 
 # Update method: Stiefel Gradient Ascent
-function updateU!(M::HPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
+function updateU!(M::HetPPCA,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
     params = sga.stepsize
     
     dFdU = gradF(M.U,M.λ,M.v,Y)
@@ -64,12 +64,12 @@ gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in z
 
 F(U,λ,v,Y) = 1/2*sum(norm(sqrt(Diagonal(λ./vl./(λ.+vl)))*U'*Yl)^2 for (Yl,vl) in zip(Y,v))
 
-function LipBoundU1(M::HPPCA,Y)
+function LipBoundU1(M::HetPPCA,Y)
     L, λmax = length(M.v), maximum(M.λ)
     return sum(norm(Y[l])^2*λmax/M.v[l]/(λmax+M.v[l]) for l in 1:L)
 end
 
-function LipBoundU2(M::HPPCA,Y)
+function LipBoundU2(M::HetPPCA,Y)
     L, λmax = length(M.v), maximum(M.λ)
     return sum(opnorm(Y[l])^2*λmax/M.v[l]/(λmax+M.v[l]) for l in 1:L)
 end

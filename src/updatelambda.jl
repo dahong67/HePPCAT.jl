@@ -1,6 +1,6 @@
 ## λ updates
 
-function updateλ!(M::HPPCA,Y,method)
+function updateλ!(M::HetPPCA,Y,method)
     for (j,uj) in enumerate(eachcol(M.U))
         M.λ[j] = updateλj(M.λ[j],uj,M.v,Y,method)
     end

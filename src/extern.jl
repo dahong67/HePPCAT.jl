@@ -1,7 +1,7 @@
 ## External interface
 
 function ppca(Y,k,iters,init,::Val{:sage})
-    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
+    M = HetPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,RootFinding())
@@ -11,7 +11,7 @@ function ppca(Y,k,iters,init,::Val{:sage})
     return getfield.(MM,:U), getfield.(MM, :λ), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:mm})
-    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
+    M = HetPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,RootFinding())
@@ -23,7 +23,7 @@ function ppca(Y,k,iters,init,::Val{:mm})
 end
 function ppca(Y,k,iters,init,::Val{:pgd})
     Ynorms = vec(mapslices(norm,hcat(Y...),dims=1))
-    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
+    M = HetPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,RootFinding())
@@ -36,7 +36,7 @@ function ppca(Y,k,iters,init,::Val{:pgd})
     return getfield.(MM,:U), getfield.(MM,:λ), getfield.(MM,:v)
 end
 function ppca(Y,k,iters,init,::Val{:sgd},max_line=50,α=0.8,β=0.5,σ=1.0)
-    M = HPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
+    M = HetPPCA(svd(init).U,svd(init).S.^2,svd(init).Vt,zeros(length(Y)))
     MM = [deepcopy(M)]
     for t = 1:iters
         updatev!(M,Y,RootFinding())

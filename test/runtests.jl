@@ -2,7 +2,7 @@ using HeteroscedasticPCA
 using ForwardDiff, LinearAlgebra, StableRNGs, Test
 
 # Relevant functions
-using HeteroscedasticPCA: HPPCA
+using HeteroscedasticPCA: HetPPCA
 using HeteroscedasticPCA: ExpectationMaximization, DifferenceOfConcave,
     MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent,
     QuadraticSolvableMinorizer, CubicSolvableMinorizer,
@@ -18,8 +18,8 @@ const TEST_WITH_AD = false
 include("ref.jl")
 
 # Convenience functions
-factormatrix(M::HPPCA) = M.U*sqrt(Diagonal(M.λ))*M.Vt
-flatten(M::HPPCA,n) = HPPCA(M.U,M.λ,M.Vt,vcat(fill.(M.v,n)...))
+factormatrix(M::HetPPCA) = M.U*sqrt(Diagonal(M.λ))*M.Vt
+flatten(M::HetPPCA,n) = HetPPCA(M.U,M.λ,M.Vt,vcat(fill.(M.v,n)...))
 
 # Test convenience constructors and equality
 @testset "Constructors" begin
@@ -29,9 +29,9 @@ flatten(M::HPPCA,n) = HPPCA(M.U,M.λ,M.Vt,vcat(fill.(M.v,n)...))
     U, s, V = svd(F)
     λ = s.^2
     
-    @test HPPCA(U,λ,V',v) == HPPCA(U,λ,V',Int.(v))
-    @test HPPCA(U,λ,Matrix{Float64}(I,k,k),v) == HPPCA(U,λ,I(k),v)
-    @test HPPCA(U,λ,V',v) == HPPCA(F,v)
+    @test HetPPCA(U,λ,V',v) == HetPPCA(U,λ,V',Int.(v))
+    @test HetPPCA(U,λ,Matrix{Float64}(I,k,k),v) == HetPPCA(U,λ,I(k),v)
+    @test HetPPCA(U,λ,V',v) == HetPPCA(F,v)
 end
 
 # Test all updates
@@ -46,7 +46,7 @@ n, v = (40, 10), (4, 1)
     
     @testset "block calls" begin
         # Generate sequence of test iterates
-        MM = [HPPCA(randn(rng,d,k),rand(rng,L))]
+        MM = [HetPPCA(randn(rng,d,k),rand(rng,L))]
         for t in 1:T
             push!(MM, deepcopy(MM[end]))
             updateF!(MM[end],Yb,ExpectationMaximization())
@@ -238,7 +238,7 @@ n, v = (40, 10), (4, 1)
     
     @testset "flat calls" begin
         # Generate sequence of test iterates
-        MM = [HPPCA(randn(rng,d,k),rand(rng,sum(n[1:L])))]
+        MM = [HetPPCA(randn(rng,d,k),rand(rng,sum(n[1:L])))]
         for t in 1:T
             push!(MM, deepcopy(MM[end]))
             updateF!(MM[end],Yf,ExpectationMaximization())
@@ -412,7 +412,7 @@ end
     U = svd(randn(rng,d,k)).U
     F = U*sqrt(Diagonal(λ))
     Y = [F*randn(rng,k,nl) + sqrt(vl)*randn(rng,d,nl) for (nl,vl) in zip(n,v)]
-    H = HPPCA(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
+    H = HetPPCA(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
     @testset "iterate $t" for t in 1:200
         updateU!(H,Y,StiefelGradientAscent(ArmijoSearch(10,0.15,0.5,0.005)))
         @test H.U'*H.U ≈ I
@@ -427,7 +427,7 @@ end
     U = svd(randn(rng,d,k)).U
     F = U*sqrt(Diagonal(λ))
     Y = [F*randn(rng,k,nl) + sqrt(vl)*randn(rng,d,nl) for (nl,vl) in zip(n,v)]
-    H = HPPCA(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
+    H = HetPPCA(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
     @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(0,0.15,0.5,0.005)))
     @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(2,10.0,0.5,0.005)))
 end

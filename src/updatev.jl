@@ -1,6 +1,6 @@
 ## v updates
 
-function updatev!(M::HPPCA,Y,method)
+function updatev!(M::HetPPCA,Y,method)
     for (l,Yl) in enumerate(Y)
         M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
     end

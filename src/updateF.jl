@@ -1,7 +1,7 @@
 ## F updates
 
 # Update method: Expectation Maximization
-function updateF!(M::HPPCA,Y,::ExpectationMaximization)
+function updateF!(M::HetPPCA,Y,::ExpectationMaximization)
     n, L = size.(Y,2), length(Y)
     Λ = Diagonal(M.λ)
     Γ = [inv(Λ + M.v[l]*I) for l in 1:L]
