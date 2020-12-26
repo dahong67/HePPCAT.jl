@@ -32,7 +32,7 @@ function updatevl(vl,U,λ,Yl,::RootFinding)
 
     # Compute coefficients and check edge case
     UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
-    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
+    UYl0 = nonnegative(sum(abs2,Yl)-sum(UYl))
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
     β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
@@ -62,7 +62,7 @@ function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     nl = size(Yl,2)
 
     UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
-    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
+    UYl0 = nonnegative(sum(abs2,Yl)-sum(UYl))
     β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
     
@@ -82,7 +82,7 @@ function updatevl(vl,U,λ,Yl,::DifferenceOfConcave)
 
     # Compute coefficients and check edge case
     UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
-    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
+    UYl0 = nonnegative(sum(abs2,Yl)-sum(UYl))
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
     β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
@@ -110,7 +110,7 @@ function updatevl(vl,U,λ,Yl,::QuadraticSolvableMinorizer)
 
     # Compute coefficients
     UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
-    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
+    UYl0 = nonnegative(sum(abs2,Yl)-sum(UYl))
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
     β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
@@ -135,7 +135,7 @@ function updatevl(vl,U,λ,Yl,::CubicSolvableMinorizer)
 
     # Compute coefficients
     UYl = [sum(abs2,Yl'U[:,j]) for j in 1:k]
-    UYl0 = max(zero(eltype(U)),sum(abs2,Yl)-sum(UYl))
+    UYl0 = nonnegative(sum(abs2,Yl)-sum(UYl))
     α = [j == 0 ? d-k : 1 for j in IdentityRange(0:k)]
     β = [j == 0 ? UYl0/nl : UYl[j]/nl for j in IdentityRange(0:k)]
     γ = [j == 0 ? zero(eltype(λ)) : λ[j] for j in IdentityRange(0:k)]
@@ -155,3 +155,6 @@ function updatevl(vl,U,λ,Yl,::CubicSolvableMinorizer)
         -αtl*log(v) - βtl/v - ζtl*v + sum(β[j]/(γ[j]+vl)^2*v + (1/2)*c[j]*(v-vl)^2 for j in 0:k if j ∉ J0)
     end
 end
+
+# Utilities
+nonnegative(x) = max(zero(x),x)
