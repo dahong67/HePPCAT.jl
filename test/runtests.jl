@@ -63,8 +63,8 @@ n, v = (40, 10), (4, 1)
             updatev!(Mr,Yb,ExpectationMaximization())
             updateF!(Mr,Yb,ExpectationMaximization())
         end
-        @test Mr !== hetppca(Yb,k,T)
-        @test Mr == hetppca(Yb,k,T)
+        @test Mr !== heppcat(Yb,k,T)
+        @test Mr == heppcat(Yb,k,T)
     end
     
     @testset "block calls" begin

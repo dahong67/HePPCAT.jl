@@ -5,7 +5,7 @@
     HetPPCA{S<:Number,T<:Real}
 
 Model parameters for probabilistic PCA with noise that is heteroscedastic across samples.
-This is the return type of [`hetppca(_)`](@ref), the corresponding estimation function.
+This is the return type of [`heppcat(_)`](@ref), the corresponding estimation function.
 # Properties
 + `F  :: Matrix`    factor matrix (computed via `F = U*sqrt(Diagonal(λ))*Vt`)
 + `U  :: Matrix{S}` eigenvectors of factor covariance `F*F'`

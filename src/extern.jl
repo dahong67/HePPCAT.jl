@@ -2,7 +2,7 @@
 
 # Main function
 """
-    hetppca(Y,k,iters;init=homppca(Y,k))
+    heppcat(Y,k,iters;init=homppca(Y,k))
 
 Estimate probabilistic PCA model for noise that is heteroscedastic across samples.
 
@@ -13,7 +13,7 @@ Inputs are:
 + `init`  : initial model (will be modified in-place)
 Output is a [`HetPPCA`](@ref) object.
 """
-function hetppca(Y,k,iters;init=homppca(Y,k))
+function heppcat(Y,k,iters;init=homppca(Y,k))
     M = init
     for _ in 1:iters
         updatev!(M,Y,ExpectationMaximization())
