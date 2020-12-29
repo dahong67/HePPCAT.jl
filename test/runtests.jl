@@ -18,21 +18,21 @@ const TEST_WITH_AD = false
 include("ref.jl")
 
 # Convenience functions
-factormatrix(M::HetPPCA) = M.U*sqrt(Diagonal(M.λ))*M.Vt
-flatten(M::HetPPCA,n) = HetPPCA(M.U,M.λ,M.Vt,vcat(fill.(M.v,n)...))
+factormatrix(M::HePPCAT) = M.U*sqrt(Diagonal(M.λ))*M.Vt
+flatten(M::HePPCAT,n) = HePPCAT(M.U,M.λ,M.Vt,vcat(fill.(M.v,n)...))
 
-# Test HetPPCA type
-@testset "HetPPCA type" begin
+# Test HePPCAT type
+@testset "HePPCAT type" begin
     rng = StableRNG(123)
     d, k, v = 10, 3, [4.0,2.0]
     F = randn(rng,d,k)
     U, s, V = svd(F)
     λ = s.^2
     
-    @test HetPPCA(U,λ,V',v) == HetPPCA(U,λ,V',Int.(v))
-    @test HetPPCA(U,λ,Matrix{Float64}(I,k,k),v) == HetPPCA(U,λ,I(k),v)
-    @test HetPPCA(U,λ,V',v) == HetPPCA(F,v)
-    @test HetPPCA(U,λ,V',v).F ≈ F
+    @test HePPCAT(U,λ,V',v) == HePPCAT(U,λ,V',Int.(v))
+    @test HePPCAT(U,λ,Matrix{Float64}(I,k,k),v) == HePPCAT(U,λ,I(k),v)
+    @test HePPCAT(U,λ,V',v) == HePPCAT(F,v)
+    @test HePPCAT(U,λ,V',v).F ≈ F
 end
 
 # Test all updates
@@ -69,7 +69,7 @@ n, v = (40, 10), (4, 1)
     
     @testset "block calls" begin
         # Generate sequence of test iterates
-        MM = [HetPPCA(randn(rng,d,k),rand(rng,L))]
+        MM = [HePPCAT(randn(rng,d,k),rand(rng,L))]
         for t in 1:T
             push!(MM, deepcopy(MM[end]))
             updateF!(MM[end],Yb,ExpectationMaximization())
@@ -261,7 +261,7 @@ n, v = (40, 10), (4, 1)
     
     @testset "flat calls" begin
         # Generate sequence of test iterates
-        MM = [HetPPCA(randn(rng,d,k),rand(rng,sum(n[1:L])))]
+        MM = [HePPCAT(randn(rng,d,k),rand(rng,sum(n[1:L])))]
         for t in 1:T
             push!(MM, deepcopy(MM[end]))
             updateF!(MM[end],Yf,ExpectationMaximization())
@@ -435,7 +435,7 @@ end
     U = svd(randn(rng,d,k)).U
     F = U*sqrt(Diagonal(λ))
     Y = [F*randn(rng,k,nl) + sqrt(vl)*randn(rng,d,nl) for (nl,vl) in zip(n,v)]
-    H = HetPPCA(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
+    H = HePPCAT(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
     @testset "iterate $t" for t in 1:200
         updateU!(H,Y,StiefelGradientAscent(ArmijoSearch(10,0.15,0.5,0.005)))
         @test H.U'*H.U ≈ I
@@ -450,7 +450,7 @@ end
     U = svd(randn(rng,d,k)).U
     F = U*sqrt(Diagonal(λ))
     Y = [F*randn(rng,k,nl) + sqrt(vl)*randn(rng,d,nl) for (nl,vl) in zip(n,v)]
-    H = HetPPCA(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
+    H = HePPCAT(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
     @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(0,0.15,0.5,0.005)))
     @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(2,10.0,0.5,0.005)))
 end

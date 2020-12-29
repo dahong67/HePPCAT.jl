@@ -1,12 +1,12 @@
 ## v updates
 
 """
-    updatev!(M::HetPPCA,Y,method)
+    updatev!(M::HePPCAT,Y,method)
 
 Update the noise variances `M.v` with respect to data `Y` using `method`.
 Internally calls [`updatevl(_)`](@ref) to update each entry.
 """
-function updatev!(M::HetPPCA,Y,method)
+function updatev!(M::HePPCAT,Y,method)
     for (l,Yl) in enumerate(Y)
         M.v[l] = updatevl(M.v[l],M.U,M.λ,Yl,method)
     end
