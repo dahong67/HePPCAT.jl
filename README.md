@@ -15,8 +15,8 @@ Please cite the following paper for this technique:
 ## What is Heteroscedastic Probabilistic PCA?
 
 **HePPCAT** is a probabilistic **Principal Component Analysis (PCA)** technique **for data that has samples with heterogeneous quality**,
-i.e., noise that is [heteroscedastic](https://en.wikipedia.org/wiki/Heteroscedasticity) *across samples*.
-It's not just a ["cool dude"](https://en.wiktionary.org/wiki/hepcat)!
+i.e., noise that is *[heteroscedastic](https://en.wikipedia.org/wiki/Heteroscedasticity) across samples*.
+It's not just a ["cool cat"](https://en.wiktionary.org/wiki/hepcat)!
 
 todo: add example and demo ("**HePPCAT** estimates both underlying principal components and the noise variances.")
 
