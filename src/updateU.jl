@@ -1,7 +1,7 @@
 ## U updates
 
 """
-    updateU!(M::HePPCAT,Y,method)
+    updateU!(M::HePPCATModel,Y,method)
 
 Update the factor eigenvectors `M.U` with respect to data `Y` using `method`.
 """
@@ -9,18 +9,18 @@ function updateU! end
 
 # Update method: Minorize Maximize (with linear minorizer)
 """
-    updateU!(M::HePPCAT,Y,::MinorizeMaximize)
+    updateU!(M::HePPCATModel,Y,::MinorizeMaximize)
 
 Minorize maximize update of `M.U` using a linear minorizer.
 """
-function updateU!(M::HePPCAT,Y,::MinorizeMaximize)
+function updateU!(M::HePPCATModel,Y,::MinorizeMaximize)
     M.U .= polar(gradF(M.U,M.λ,M.v,Y))
     return M
 end
 
 # Update method: Projected Gradient Ascent
 """
-    updateU!(M::HePPCAT,Y,pga::ProjectedGradientAscent)
+    updateU!(M::HePPCATModel,Y,pga::ProjectedGradientAscent)
 
 Projected gradient ascent update of `M.U`.
 Supported step size types:
@@ -29,7 +29,7 @@ Supported step size types:
 and
 [`ArmijoSearch`](@ref) (experimental).
 """
-function updateU!(M::HePPCAT,Y,pga::ProjectedGradientAscent{<:Number})
+function updateU!(M::HePPCATModel,Y,pga::ProjectedGradientAscent{<:Number})
     if pga.stepsize == Inf
         M.U .= polar(gradF(M.U,M.λ,M.v,Y))
     else
@@ -37,10 +37,10 @@ function updateU!(M::HePPCAT,Y,pga::ProjectedGradientAscent{<:Number})
     end
     return M
 end
-function updateU!(M::HePPCAT,Y,pga::ProjectedGradientAscent{<:InverseLipschitz})
+function updateU!(M::HePPCATModel,Y,pga::ProjectedGradientAscent{<:InverseLipschitz})
     return updateU!(M,Y,ProjectedGradientAscent(inv(pga.stepsize.bound(M,Y))))
 end
-function updateU!(M::HePPCAT,Y,pga::ProjectedGradientAscent{<:ArmijoSearch})
+function updateU!(M::HePPCATModel,Y,pga::ProjectedGradientAscent{<:ArmijoSearch})
     params = pga.stepsize
     
     dFdU = gradF(M.U,M.λ,M.v,Y)
@@ -61,13 +61,13 @@ end
 
 # Update method: Stiefel Gradient Ascent
 """
-    updateU!(M::HePPCAT,Y,sga::StiefelGradientAscent)
+    updateU!(M::HePPCATModel,Y,sga::StiefelGradientAscent)
 
 Stiefel gradient ascent update of `M.U`.
 Supported step size types:
 [`ArmijoSearch`](@ref).
 """
-function updateU!(M::HePPCAT,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
+function updateU!(M::HePPCATModel,Y,sga::StiefelGradientAscent{<:ArmijoSearch})
     params = sga.stepsize
     
     dFdU = gradF(M.U,M.λ,M.v,Y)
@@ -104,21 +104,21 @@ Euclidean gradient of objective for the optimization problem w.r.t `U`.
 gradF(U,λ,v,Y) = sum(Yl * Yl' * U * Diagonal(λ./vl./(λ.+vl)) for (Yl,vl) in zip(Y,v))
 
 """
-    LipBoundU1(M::HePPCAT,Y)
+    LipBoundU1(M::HePPCATModel,Y)
 
 Lipschitz bound of objective w.r.t. `U` at `M` with data `Y`.
 """
-function LipBoundU1(M::HePPCAT,Y)
+function LipBoundU1(M::HePPCATModel,Y)
     L, λmax = length(M.v), maximum(M.λ)
     return sum(norm(Y[l])^2*λmax/M.v[l]/(λmax+M.v[l]) for l in 1:L)
 end
 
 """
-    LipBoundU2(M::HePPCAT,Y)
+    LipBoundU2(M::HePPCATModel,Y)
 
 Lipschitz bound of objective w.r.t. `U` at `M` with data `Y`.
 """
-function LipBoundU2(M::HePPCAT,Y)
+function LipBoundU2(M::HePPCATModel,Y)
     L, λmax = length(M.v), maximum(M.λ)
     return sum(opnorm(Y[l])^2*λmax/M.v[l]/(λmax+M.v[l]) for l in 1:L)
 end

@@ -13,7 +13,7 @@ using Roots: find_zero
 using Statistics: mean
 
 # Exports
-export HePPCAT, heppcat, loglikelihood
+export HePPCATModel, heppcat, loglikelihood
 
 # More convenient form of argmax not yet available
 # + findmax from https://github.com/cmcaine/julia/blob/argmax-2-arg-harder/base/reduce.jl#L704-L705

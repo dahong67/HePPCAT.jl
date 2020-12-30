@@ -1,7 +1,7 @@
 ## F updates
 
 """
-    updateF!(M::HePPCAT,Y,method)
+    updateF!(M::HePPCATModel,Y,method)
 
 Update the factor matrix in `M` with respect to data `Y` using `method`.
 """
@@ -9,11 +9,11 @@ function updateF! end
 
 # Update method: Expectation Maximization
 """
-    updateF!(M::HePPCAT,Y,::ExpectationMaximization)
+    updateF!(M::HePPCATModel,Y,::ExpectationMaximization)
 
 Expectation maximization update of `F`.
 """
-function updateF!(M::HePPCAT,Y,::ExpectationMaximization)
+function updateF!(M::HePPCATModel,Y,::ExpectationMaximization)
     n, L = size.(Y,2), length(Y)
     Λ = Diagonal(M.λ)
     Γ = [inv(Λ + M.v[l]*I) for l in 1:L]

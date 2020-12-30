@@ -1,12 +1,12 @@
 ## λ updates
 
 """
-    updateλ!(M::HePPCAT,Y,method)
+    updateλ!(M::HePPCATModel,Y,method)
 
 Update the factor eigenvalues `M.λ` with respect to data `Y` using `method`.
 Internally calls [`updateλj(_)`](@ref) to update each entry.
 """
-function updateλ!(M::HePPCAT,Y,method)
+function updateλ!(M::HePPCATModel,Y,method)
     for (j,uj) in enumerate(eachcol(M.U))
         M.λ[j] = updateλj(M.λ[j],uj,M.v,Y,method)
     end

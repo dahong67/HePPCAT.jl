@@ -2,7 +2,7 @@
 
 # Model parameters (to be estimated)
 """
-    HePPCAT{S<:Number,T<:Real}
+    HePPCATModel{S<:Number,T<:Real}
 
 Model parameters for probabilistic PCA with noise that is heteroscedastic across samples.
 This is the return type of [`heppcat(_)`](@ref), the corresponding estimation function.
@@ -13,46 +13,46 @@ This is the return type of [`heppcat(_)`](@ref), the corresponding estimation fu
 + `Vt :: Matrix{S}` (transposed) eigenvectors of `F'*F` (i.e., right singular vectors of `F`)
 + `v  :: Vector{T}` noise variances
 """
-struct HePPCAT{S<:Number,T<:Real}
+struct HePPCATModel{S<:Number,T<:Real}
     U::Matrix{S}   # eigvecs of FF' (factor/spike covariance)
     λ::Vector{T}   # eigvals of FF' (factor/spike covariance)
     Vt::Matrix{S}  # (transposed) eigvecs of F'F (i.e., right singvecs of F)
     v::Vector{T}   # block noise variances
-    function HePPCAT{S,T}(U,λ,Vt,v) where {S<:Number,T<:Real}
+    function HePPCATModel{S,T}(U,λ,Vt,v) where {S<:Number,T<:Real}
         size(U,2) == length(λ) || throw(DimensionMismatch("U has dimensions $(size(U)) but λ has length $(length(λ))"))
         size(Vt,1) == length(λ) || throw(DimensionMismatch("Vt has dimensions $(size(Vt)) but λ has length $(length(λ))"))
         new{S,T}(U,λ,Vt,v)
     end
 end
-HePPCAT(U::Matrix{S},λ::Vector{T},Vt::Matrix{S},v::Vector{T}) where {S<:Number,T<:Real} = HePPCAT{S,T}(U,λ,Vt,v)
+HePPCATModel(U::Matrix{S},λ::Vector{T},Vt::Matrix{S},v::Vector{T}) where {S<:Number,T<:Real} = HePPCATModel{S,T}(U,λ,Vt,v)
 
 """
-    HePPCAT(U::AbstractMatrix,λ::AbstractVector,Vt::AbstractMatrix,v::AbstractVector)
+    HePPCATModel(U::AbstractMatrix,λ::AbstractVector,Vt::AbstractMatrix,v::AbstractVector)
 
-Construct HePPCAT object from factor eigenstructure and noise variances.
+Construct HePPCATModel object from factor eigenstructure and noise variances.
 """
-function HePPCAT(U::AbstractMatrix,λ::AbstractVector,Vt::AbstractMatrix,v::AbstractVector)
+function HePPCATModel(U::AbstractMatrix,λ::AbstractVector,Vt::AbstractMatrix,v::AbstractVector)
     S = promote_type(eltype(U),eltype(Vt))
     T = promote_type(eltype(λ),eltype(v))
-    HePPCAT(convert(Matrix{S},U),
+    HePPCATModel(convert(Matrix{S},U),
         convert(Vector{T},λ),
         convert(Matrix{S},Vt),
         convert(Vector{T},v))
 end
 
 """
-    HePPCAT(F::AbstractMatrix,v::AbstractVector)
+    HePPCATModel(F::AbstractMatrix,v::AbstractVector)
 
-Construct HePPCAT object from factor matrix and noise variances.
+Construct HePPCATModel object from factor matrix and noise variances.
 """
-function HePPCAT(F::AbstractMatrix,v::AbstractVector)
+function HePPCATModel(F::AbstractMatrix,v::AbstractVector)
     U,s,V = svd(F)
-    return HePPCAT(U,s.^2,V',v)
+    return HePPCATModel(U,s.^2,V',v)
 end
 
-Base.:(==)(F::HePPCAT, G::HePPCAT) = all(f -> getfield(F, f) == getfield(G, f), 1:nfields(F))
+Base.:(==)(F::HePPCATModel, G::HePPCATModel) = all(f -> getfield(F, f) == getfield(G, f), 1:nfields(F))
 
-function Base.getproperty(M::HePPCAT, d::Symbol)
+function Base.getproperty(M::HePPCATModel, d::Symbol)
     if d === :F
         U = getfield(M, :U)
         λ = getfield(M, :λ)
@@ -63,7 +63,7 @@ function Base.getproperty(M::HePPCAT, d::Symbol)
     end
 end
 
-Base.propertynames(M::HePPCAT, private::Bool=false) =
+Base.propertynames(M::HePPCATModel, private::Bool=false) =
     private ? (:F, fieldnames(typeof(M))...) : (:F, :U, :λ, :Vt, :v)
 
 # Update methods

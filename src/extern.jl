@@ -11,7 +11,7 @@ Inputs are:
 + `k` : number of factors
 + `iters` : number of iterations to run
 + `init`  : initial model (will be modified in-place)
-Output is a [`HePPCAT`](@ref) object.
+Output is a [`HePPCATModel`](@ref) object.
 """
 function heppcat(Y,k,iters;init=homppca(Y,k))
     M = init
@@ -31,7 +31,7 @@ Estimate probabilistic PCA model for noise that is homoscedastic across samples.
 Inputs are:
 + `Y` : list of matrices (each column is a sample)
 + `k` : number of factors
-Output is a [`HePPCAT`](@ref) object.
+Output is a [`HePPCATModel`](@ref) object.
 """
 function homppca(Y,k)
     Yf = reduce(hcat,Y)
@@ -39,16 +39,16 @@ function homppca(Y,k)
     Uh, s, _ = svd(Yf)
     λh = abs2.(s)./n
     λb = mean(λh[k+1:end])
-    HePPCAT(Uh[:,1:k],λh[1:k] .- λb,I(k),fill(λb,L))
+    HePPCATModel(Uh[:,1:k],λh[1:k] .- λb,I(k),fill(λb,L))
 end
 
 # log-likelihood (todo: add constant)
 """
-    loglikelihood(M::HePPCAT,Y)
+    loglikelihood(M::HePPCATModel,Y)
 
 Log-likelihood of model `M` with respect to data `Y` (dropping constant term).
 """
-function loglikelihood(M::HePPCAT,Y)
+function loglikelihood(M::HePPCATModel,Y)
     d, k = size(M.U)
     n, L = size.(Y,2), length(Y)
     return 1/2*sum(1:L) do l
