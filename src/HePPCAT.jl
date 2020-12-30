@@ -1,5 +1,5 @@
-"Heteroscedastic PPCA module. Provides probabilistic PCA for data with heterogeneous quality (heteroscedastic noise)."
-module HeteroscedasticPPCA
+"Heteroscedastic PPCA Technique (HePPCAT) module. Provides probabilistic PCA for data with samples of heterogeneous quality (heteroscedastic noise)."
+module HePPCAT
 
 # Imports
 using Base: IdentityUnitRange   # todo: swap with IdentityRanges.IdentityRange if working (https://github.com/JuliaArrays/IdentityRanges.jl/issues/12)

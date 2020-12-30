@@ -1,8 +1,8 @@
 # HePPCAT: HEteroscedastic Probabilistic PCA Technique
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![Build Status](https://github.com/dahong67/HeteroscedasticPPCA.jl/workflows/CI/badge.svg)](https://github.com/dahong67/HeteroscedasticPPCA.jl/actions)
-[![Coverage](https://codecov.io/gh/dahong67/HeteroscedasticPPCA.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/dahong67/HeteroscedasticPPCA.jl)
+[![Build Status](https://github.com/dahong67/HePPCAT.jl/workflows/CI/badge.svg)](https://github.com/dahong67/HePPCAT.jl/actions)
+[![Coverage](https://codecov.io/gh/dahong67/HePPCAT.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/dahong67/HePPCAT.jl)
 
 > :wave: *This package provides research code and work is ongoing.
 > If you are interested in using it in your own research,

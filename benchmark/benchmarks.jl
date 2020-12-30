@@ -1,4 +1,4 @@
-using BenchmarkTools, HeteroscedasticPPCA
+using BenchmarkTools, HePPCAT
 using Random, LinearAlgebra
 
 const SUITE = BenchmarkGroup()
@@ -18,8 +18,8 @@ for d = 5:10:15, k = 1:3:4, L = 1:2
     F0 = randn(rng, d, k)
 
     for T = 0:10:20
-        SUITE["sage"]["block: d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HeteroscedasticPPCA.ppca($Y, $k, $T, $F0, $(Val(:sage)))
-        SUITE["sage"]["flat:  d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HeteroscedasticPPCA.ppca($Yflat, $k, $T, $F0, $(Val(:sage)))
+        SUITE["sage"]["block: d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HePPCAT.ppca($Y, $k, $T, $F0, $(Val(:sage)))
+        SUITE["sage"]["flat:  d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HePPCAT.ppca($Yflat, $k, $T, $F0, $(Val(:sage)))
     end
 end
 
@@ -36,7 +36,7 @@ for d = 50:25:100, k = 1:2:3, L = 1:2
     F0 = randn(rng, d, k)
 
     for T = 0:10:10
-        SUITE["mm"]["flat:  d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HeteroscedasticPPCA.ppca($Yflat, $k, $T, $F0, $(Val(:mm)))
+        SUITE["mm"]["flat:  d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HePPCAT.ppca($Yflat, $k, $T, $F0, $(Val(:mm)))
     end
 end
 
@@ -53,7 +53,7 @@ for d = 50:25:100, k = 1:2:3, L = 1:2
     F0 = randn(rng, d, k)
 
     for T = 0:10:10
-        SUITE["pgd"]["flat:  d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HeteroscedasticPPCA.ppca($Yflat, $k, $T, $F0, $(Val(:pgd)))
+        SUITE["pgd"]["flat:  d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HePPCAT.ppca($Yflat, $k, $T, $F0, $(Val(:pgd)))
     end
 end
 
@@ -70,6 +70,6 @@ for d = 50:25:100, k = 1:2:3, L = 1:2
     F0 = randn(rng, d, k)
 
     for T = 0:10:10
-        SUITE["sgd"]["flat:  d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HeteroscedasticPPCA.ppca($Yflat, $k, $T, $F0, $(Val(:sgd)))
+        SUITE["sgd"]["flat:  d=$d, k=$k, L=$L, T=$T"] = @benchmarkable HePPCAT.ppca($Yflat, $k, $T, $F0, $(Val(:sgd)))
     end
 end
