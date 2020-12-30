@@ -12,7 +12,7 @@ using HePPCAT: LipBoundU1, LipBoundU2, loglikelihood
 using HePPCAT: updateF!, updatev!, updateU!, updateλ!
 
 # Flag to use automatic differentiation
-const TEST_WITH_AD = false
+const TEST_WITH_AD = get(ENV,"HEPPCAT_TEST_WITH_AD","false") == "true"
 
 # Load reference implementations
 include("ref.jl")
