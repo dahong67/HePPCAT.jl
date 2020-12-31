@@ -14,24 +14,26 @@ Please cite the following paper for this technique:
 
 ## What is Heteroscedastic Probabilistic PCA (HePPCAT)?
 
-**HePPCAT** is a probabilistic **Principal Component Analysis (PCA)** technique **for data that has samples with heterogeneous quality**,
+**HePPCAT** is a probabilistic **Principal Component Analysis (PCA)** technique
+**for data that has samples with heterogeneous quality**,
 i.e., noise that is *[heteroscedastic](https://en.wikipedia.org/wiki/Heteroscedasticity) across samples*.
-It's not just a ["cool cat"](https://en.wiktionary.org/wiki/hepcat)!
 
-In the following illustration,
-sample data points
-consist of a first group of *noisier samples*
+**Illustration:**
+data points
+with a first group of *noisier samples*
 and a second group of *cleaner samples*.
 
 ![2D illustration](/demo/illustration-2D.png)
 
-Homoscedastic PPCA estimates only one noise variance for all the data
-and treats them uniformly,
-which can degrade performance.
+Homoscedastic PPCA estimates *only one* noise variance for the whole data,
+and treats samples as though they were all equally noisy.
+Recovery of latent components can degrade a lot due to the noisier samples,
+even though the rest of the samples are relatively clean.
 
-**HePPCAT estimates *separate* noise variances for each group
-*jointly* with the latent components
-to improve recovery.**
+**HePPCAT estimates latent components along with *separate* noise variances for each group.
+It accounts for heterogeneous quality among the samples and is generally more robust.**
+
+*It's not just a ["cool cat"](https://en.wiktionary.org/wiki/hepcat)!*
 
 ## How does it work?
 
