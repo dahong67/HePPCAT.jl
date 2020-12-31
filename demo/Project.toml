@@ -1,0 +1,4 @@
+[deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+HePPCAT = "5b0c0c40-6f85-415d-b828-3ce01d5b51ec"
+StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
