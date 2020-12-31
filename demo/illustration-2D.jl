@@ -22,7 +22,7 @@ models = [
 ]
 
 ## Plot
-scene, layout = layoutscene(20,resolution=(800,500))
+scene, layout = layoutscene(20,resolution=(800,600))
 datacolors = [:dodgerblue1,:green3]
 for (idx,(title,M)) in enumerate(models)
     # Data and axes
@@ -38,7 +38,7 @@ for (idx,(title,M)) in enumerate(models)
     end
 
     # Estimate
-    text!(ax,"estimate",position=(M.U[1]/M.U[2],1).*(idx == 1 ? 5.8 : 5.6),textsize=0.55,align=(:right,:bottom),rotation=atan(M.U[2]/M.U[1]),color=:darkorange1)
+    text!(ax,"estimate",position=(M.U[1],M.U[2]).*([4.4,5.6][idx]*sqrt(2)),textsize=0.55,align=(:right,:bottom),rotation=atan(M.U[2]/M.U[1]),color=:darkorange1)
     lines!(ax,-6.25..6.25,x->x*M.U[2]/M.U[1],linewidth=3,color=:darkorange1)
 
     # Formatting
@@ -48,12 +48,14 @@ for (idx,(title,M)) in enumerate(models)
     limits!(ax,(-6.25,6.25),(-6.25,6.25))
     hidedecorations!(ax,grid=false)
 
-    # # Noise variance estimates
-    # ax = layout[2,idx] = LAxis(scene)
-    # scatter!(ax,M.v,color=[fill(datacolors[1],n[1]); fill(datacolors[2],n[2])],strokecolor=:transparent,markersize=2)
-    # ax.xticks = [0,n[1],sum(n)]
-    # limits!(ax,(0,sum(n)),(0,10))
-    # hideydecorations!(ax,grid=false)
+    # Noise variance estimates
+    ax = layout[2,idx] = LAxis(scene)
+    scatter!(ax,reduce(vcat,fill.(M.v,n)),color=reduce(vcat,fill.(datacolors,n)),strokecolor=:transparent,markersize=2)
+    # ax.ylabel = "noise var."
+    ax.xticks = [0,n[1],sum(n)]
+    ax.yticks = v
+    limits!(ax,(0,sum(n)),(-1,5))
+    hidedecorations!(ax,grid=false)
 end
 
 # Legend
@@ -66,5 +68,10 @@ leg.tellheight = true
 leg.orientation = :horizontal
 leg.framevisible = false
 
-# Save
+# Format and save
+layout[1,1,Left()] = LText(scene,"data and estimated components",textsize=12,rotation=pi/2)
+layout[2,1,Left()] = LText(scene,"estimated\nnoise vars.",textsize=12,rotation=pi/2)
+rowsize!(layout, 2, Relative(1/6))
+
 CairoMakie.save("illustration-2D.png",scene)
+scene
