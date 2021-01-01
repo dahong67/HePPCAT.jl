@@ -72,7 +72,7 @@ leg.framevisible = false
 
 # Format and save
 layout[1,1,Left()] = LText(scene,"data and estimated components",textsize=14,rotation=pi/2)
-layout[2,1,Left()] = LText(scene,"estimated\nnoise vars.",textsize=14,rotation=pi/2)
+layout[2,1,Left()] = LText(scene,"est. noise\nvariances",textsize=14,rotation=pi/2)
 rowsize!(layout, 2, Relative(1/6))
 
 CairoMakie.save("illustration-2D.png",scene)

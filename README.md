@@ -40,11 +40,9 @@ It accounts for heterogeneous quality among the samples and is generally more ro
 **Installation:**
 this package <!-- is registered and --> can be installed
 via the [package manager](https://docs.julialang.org/en/v1/stdlib/Pkg/).
-<!-- ```julia
-(@v1.5) pkg> install HePPCAT
-``` -->
+<!-- ```julia (@v1.5) pkg> add HePPCAT``` -->
 ```julia
-(@v1.5) pkg> install https://github.com/dahong67/HePPCAT.jl
+(@v1.5) pkg> add https://github.com/dahong67/HePPCAT.jl
 ```
 
 **Main function:**
