@@ -77,8 +77,8 @@ search: HePPCATModel
 
   HePPCATModel{S<:Number,T<:Real}
 
-  Model parameters for probabilistic PCA with noise that is heteroscedastic across samples. This is the return
-  type of heppcat(_), the corresponding estimation function.
+  Model parameters for probabilistic PCA with noise that is heteroscedastic across samples.
+  This is the return type of heppcat(_), the corresponding estimation function.
 
   Properties
   ≡≡≡≡≡≡≡≡≡≡≡≡
