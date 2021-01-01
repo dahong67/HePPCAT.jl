@@ -23,7 +23,7 @@ data points
 with a group of *noisier samples* (blue points)
 and a group of *cleaner samples* (green points).
 
-![2D illustration](/demo/illustration-2D.png)
+![2D illustration](demo/illustration-2D.png)
 
 Homoscedastic PPCA estimates *only one* noise variance for the whole data,
 and treats samples as though they were all equally noisy.
