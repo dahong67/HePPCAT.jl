@@ -29,7 +29,7 @@ for (idx,(title,M)) in enumerate(models)
     ax = layout[1,idx] = LAxis(scene,title=title)
 
     # Latent axis
-    text!(ax,"latent/true axis",position=(5.6,5.6),textsize=0.55,align=(:right,:top),rotation=pi/4)
+    text!(ax,"true component",position=(5.7,5.7),textsize=0.55,align=(:right,:top),rotation=pi/4)
     lines!(ax,-6.25..6.25,identity,linewidth=3,color=:black)
 
     # Data points
@@ -38,7 +38,7 @@ for (idx,(title,M)) in enumerate(models)
     end
 
     # Estimate
-    text!(ax,"estimate",position=(M.U[1],M.U[2]).*([4.4,5.6][idx]*sqrt(2)),textsize=0.55,align=(:right,:bottom),rotation=atan(M.U[2]/M.U[1]),color=:darkorange1)
+    text!(ax,"estimate",position=(M.U[1],M.U[2]).*([4.5,5.7][idx]*sqrt(2)),textsize=0.55,align=(:right,:bottom),rotation=atan(M.U[2]/M.U[1]),color=:darkorange1)
     lines!(ax,-6.25..6.25,x->x*M.U[2]/M.U[1],linewidth=3,color=:darkorange1)
 
     # Formatting
@@ -51,7 +51,9 @@ for (idx,(title,M)) in enumerate(models)
     # Noise variance estimates
     ax = layout[2,idx] = LAxis(scene)
     scatter!(ax,reduce(vcat,fill.(M.v,n)),color=reduce(vcat,fill.(datacolors,n)),strokecolor=:transparent,markersize=2)
-    # ax.ylabel = "noise var."
+    # scatter!(ax,fill(-1,sum(n)),color=reduce(vcat,fill.(datacolors,n)),strokecolor=:transparent,markersize=5)
+    # scatter!(ax,reduce(vcat,fill.(v,n)),color=:black,strokecolor=:transparent,markersize=5)
+    # scatter!(ax,reduce(vcat,fill.(M.v,n)),color=:darkorange1,strokecolor=:transparent,markersize=3)
     ax.xticks = [0,n[1],sum(n)]
     ax.yticks = v
     limits!(ax,(0,sum(n)),(-1,5))
@@ -61,7 +63,7 @@ end
 # Legend
 leg = layout[end+1,:] = LLegend(scene,
     [MarkerElement(marker=:circle,color=c,strokecolor=:transparent) for c in datacolors],
-    ["Noisier data","Cleaner data"]
+    ["Noisier samples","Cleaner samples"]
 )
 leg.labelsize = 15
 leg.tellheight = true
@@ -69,8 +71,8 @@ leg.orientation = :horizontal
 leg.framevisible = false
 
 # Format and save
-layout[1,1,Left()] = LText(scene,"data and estimated components",textsize=12,rotation=pi/2)
-layout[2,1,Left()] = LText(scene,"estimated\nnoise vars.",textsize=12,rotation=pi/2)
+layout[1,1,Left()] = LText(scene,"data and estimated components",textsize=14,rotation=pi/2)
+layout[2,1,Left()] = LText(scene,"estimated\nnoise vars.",textsize=14,rotation=pi/2)
 rowsize!(layout, 2, Relative(1/6))
 
 CairoMakie.save("illustration-2D.png",scene)
