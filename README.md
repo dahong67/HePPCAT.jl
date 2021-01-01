@@ -93,5 +93,4 @@ search: HePPCATModel
 
     •    v  :: Vector{T} noise variances
 ```
-
-todo: add demo notebook and link to it here
+See `demo/` directory and paper code repo **(todo: add link to paper code)** for some examples!
