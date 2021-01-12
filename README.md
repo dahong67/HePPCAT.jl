@@ -12,7 +12,7 @@
 Please cite the following paper for this technique:
 > David Hong, Kyle Gilman, Laura Balzano, Jeffrey A. Fessler.
 > "HePPCAT: Probabilistic PCA for Data with Heteroscedastic Noise", 2021.
-> http://arxiv.org/abs/2101.03468.
+> https://arxiv.org/abs/2101.03468.
 
 In BibTeX form:
 ```bibtex
