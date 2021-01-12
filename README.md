@@ -103,4 +103,4 @@ search: HePPCATModel
 
     •    v  :: Vector{T} noise variances
 ```
-See `demo/` directory and paper code repo **(coming soon!)** for some examples!
+See the `demo/` directory and the [paper code repo](https://gitlab.com/dahong/heteroscedastic-probabilistic-pca) for some examples!
