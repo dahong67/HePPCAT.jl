@@ -10,7 +10,19 @@
 > Feel free to write: dahong67@wharton.upenn.edu*
 
 Please cite the following paper for this technique:
-> todo: add reference
+> David Hong, Kyle Gilman, Laura Balzano, Jeffrey A. Fessler.
+> "HePPCAT: Probabilistic PCA for Data with Heteroscedastic Noise", 2021.
+> [http://arxiv.org/abs/2101.03468]().
+
+In BibTeX form:
+```bibtex
+@misc{hgbf2021heppcat,
+  title  = "HePPCAT: Probabilistic PCA for Data with Heteroscedastic Noise", 
+  author = "David Hong and Kyle Gilman and Laura Balzano and Jeffrey A. Fessler",
+  year   = 2021,
+  url    = "https://arxiv.org/abs/2101.03468",
+}
+```
 
 ## What is Heteroscedastic Probabilistic PCA (HePPCAT)?
 
@@ -91,4 +103,4 @@ search: HePPCATModel
 
     •    v  :: Vector{T} noise variances
 ```
-See `demo/` directory and paper code repo **(todo: add link to paper code)** for some examples!
+See `demo/` directory and paper code repo **(coming soon!)** for some examples!
