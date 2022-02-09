@@ -11,16 +11,21 @@
 
 Please cite the following paper for this technique:
 > David Hong, Kyle Gilman, Laura Balzano, Jeffrey A. Fessler.
-> "HePPCAT: Probabilistic PCA for Data with Heteroscedastic Noise", 2021.
+> "HePPCAT: Probabilistic PCA for Data with Heteroscedastic Noise",
+> IEEE Transactions on Signal Processing 69:4819-4834, Aug. 2021.
+> https://doi.org/10.1109/TSP.2021.3104979
 > https://arxiv.org/abs/2101.03468.
 
 In BibTeX form:
 ```bibtex
-@misc{hgbf2021heppcat,
-  title  = "HePPCAT: Probabilistic PCA for Data with Heteroscedastic Noise", 
-  author = "David Hong and Kyle Gilman and Laura Balzano and Jeffrey A. Fessler",
-  year   = 2021,
-  url    = "https://arxiv.org/abs/2101.03468",
+@article{hgbf2021heppcat,
+  title   = "{HePPCAT}: Probabilistic {PCA} for Data with Heteroscedastic Noise",
+  author  = "David Hong and Kyle Gilman and Laura Balzano and Jeffrey A. Fessler",
+  journal = "{IEEE} Transactions on Signal Processing",
+  year    = "2021",
+  volume  = "69",
+  pages   = "4819--4834",
+  DOI     = "10.1109/tsp.2021.3104979",
 }
 ```
 
