@@ -2,21 +2,22 @@
 
 # Main function
 """
-    heppcat(Y,k,iters;init=homppca(Y,k))
+    heppcat(Y, k, iters; init=homppca(Y,k), vknown=false)
 
 Estimate probabilistic PCA model for noise that is heteroscedastic across samples.
 
-Inputs are:
+# Inputs:
 + `Y` : list of matrices (each column is a sample)
 + `k` : number of factors
 + `iters` : number of iterations to run
 + `init`  : initial model (will be modified in-place)
++ `vknown::Bool` : variances are known (do not update) default `false`
 Output is a [`HePPCATModel`](@ref) object.
 """
-function heppcat(Y,k,iters;init=homppca(Y,k))
+function heppcat(Y, k, iters::Int; init=homppca(Y,k), vknown::Bool=false)
     M = init
     for _ in 1:iters
-        updatev!(M,Y,ExpectationMaximization())
+        !vknown && updatev!(M,Y,ExpectationMaximization())
         updateF!(M,Y,ExpectationMaximization())
     end
     M
