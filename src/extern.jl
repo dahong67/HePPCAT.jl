@@ -17,7 +17,7 @@ Output is a [`HePPCATModel`](@ref) object.
 function heppcat(Y,k,iters::Integer;init=homppca(Y,k),vknown::Bool=false)
     M = init
     for _ in 1:iters
-        !vknown && updatev!(M,Y,ExpectationMaximization())
+        vknown || updatev!(M,Y,ExpectationMaximization())
         updateF!(M,Y,ExpectationMaximization())
     end
     M
