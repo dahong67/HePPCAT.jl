@@ -6,7 +6,7 @@
 
 Estimate probabilistic PCA model for noise that is heteroscedastic across samples.
 
-# Inputs:
+# Inputs
 + `Y` : list of matrices (each column is a sample)
 + `k` : number of factors
 + `iters` : number of iterations to run
