@@ -65,6 +65,13 @@ n, v = (40, 10), (4, 1)
         end
         @test Mr !== heppcat(Yb,k,T)
         @test Mr == heppcat(Yb,k,T)
+        
+        Mr = homppca(Yb,k)
+        for _ in 1:T
+            updateF!(Mr,Yb,ExpectationMaximization())
+        end
+        @test Mr !== heppcat(Yb,k,T;vknown=true)
+        @test Mr == heppcat(Yb,k,T;vknown=true)
     end
     
     @testset "block calls" begin

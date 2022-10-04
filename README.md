@@ -69,11 +69,12 @@ Type `?heppcat` for the [docstring](https://docs.julialang.org/en/v1/manual/docu
 help?> heppcat
 search: heppcat HePPCAT HePPCATModel
 
-  heppcat(Y,k,iters;init=homppca(Y,k))
+  heppcat(Y,k,iters;init=homppca(Y,k),vknown=false)
 
   Estimate probabilistic PCA model for noise that is heteroscedastic across samples.
 
-  Inputs are:
+  Inputs
+  ≡≡≡≡≡≡≡≡
 
     •    Y : list of matrices (each column is a sample)
 
@@ -82,6 +83,8 @@ search: heppcat HePPCAT HePPCATModel
     •    iters : number of iterations to run
 
     •    init : initial model (will be modified in-place)
+
+    •    vknown : variances are known (do not update) default false
 
   Output is a HePPCATModel object.
 ```
