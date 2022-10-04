@@ -55,17 +55,16 @@ It accounts for heterogeneous quality among the samples and is generally more ro
 ## Quick start: how to use HePPCAT
 
 **Installation:**
-this package <!-- is registered and --> can be installed
+this package is registered and can be installed
 via the [package manager](https://docs.julialang.org/en/v1/stdlib/Pkg/).
-<!-- ```julia (@v1.5) pkg> add HePPCAT``` -->
-```julia
-(@v1.5) pkg> add https://github.com/dahong67/HePPCAT.jl
+```bash
+(@v1.8) pkg> add HePPCAT
 ```
 
 **Main function:**
 the main function is called `heppcat`.
 Type `?heppcat` for the [docstring](https://docs.julialang.org/en/v1/manual/documentation/#Accessing-Documentation).
-```julia
+```bash
 help?> heppcat
 search: heppcat HePPCAT HePPCATModel
 
@@ -89,7 +88,7 @@ search: heppcat HePPCAT HePPCATModel
   Output is a HePPCATModel object.
 ```
 It returns a `HePPCATModel`:
-```julia
+```bash
 help?> HePPCATModel
 search: HePPCATModel
 
