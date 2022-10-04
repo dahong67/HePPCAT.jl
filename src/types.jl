@@ -102,6 +102,16 @@ struct ProjectedGradientAscent{T}
 end
 
 """
+    ProjectedVariance{S,T}
+    Project variance such that for whatever method used,
+    minimum variance does not go below varfloor
+"""
+struct ProjectedVariance{S,T}
+    method::S
+    varfloor::T
+end
+
+"""
     StiefelGradientAscent{T}
 
 Stiefel gradient ascent update method.
