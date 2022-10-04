@@ -57,14 +57,14 @@ It accounts for heterogeneous quality among the samples and is generally more ro
 **Installation:**
 this package is registered and can be installed
 via the [package manager](https://docs.julialang.org/en/v1/stdlib/Pkg/).
-```bash
+```
 (@v1.8) pkg> add HePPCAT
 ```
 
 **Main function:**
 the main function is called `heppcat`.
 Type `?heppcat` for the [docstring](https://docs.julialang.org/en/v1/manual/documentation/#Accessing-Documentation).
-```bash
+```
 help?> heppcat
 search: heppcat HePPCAT HePPCATModel
 
@@ -88,7 +88,7 @@ search: heppcat HePPCAT HePPCATModel
   Output is a HePPCATModel object.
 ```
 It returns a `HePPCATModel`:
-```bash
+```
 help?> HePPCATModel
 search: HePPCATModel
 
