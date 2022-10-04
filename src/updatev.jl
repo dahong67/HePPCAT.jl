@@ -69,9 +69,13 @@ function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     ρ = sum((oneunit(eltype(λ)).-γ./(γ.+vl)).^2 .* β) + vl*sum(λ./(λ.+vl))
     return ρ/d
 end
-# Update Method: Projected Variance (any method)
+
+# Update Method: Projected Variance (with any method)
 """
-Ensures minimum variance does not go below varfloor for any given method
+    updatevl(vl,U,λ,Yl,method::ProjectedVariance)
+
+Update variance using `method.method` then project the variance
+so that the variance iterate does not go below `method.varfloor`.
 """
 function updatevl(vl,U,λ,Yl,method::ProjectedVariance)
     return max(updatevl(vl,U,λ,Yl,method.method),method.varfloor)
