@@ -85,7 +85,7 @@ search: heppcat HePPCAT HePPCATModel
 
     •    vknown : variances are known (do not update) default false
     
-    •    varfloor : minimum variance floor to prevent failing cases, default = 0. Variances will not go below value.
+    •    varfloor : lower bound for variance iterates (useful if the iterates are degenerating to zero) default = 0
 
   Output is a HePPCATModel object.
 ```
