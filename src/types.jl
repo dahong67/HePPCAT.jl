@@ -103,8 +103,9 @@ end
 
 """
     ProjectedVariance{S,T}
-Project variance such that for whatever method used,
-minimum variance does not go below varfloor
+
+Update variance using `method` then project the variance
+so that the variance iterate does not go below `varfloor`.
 """
 struct ProjectedVariance{S,T}
     method::S
