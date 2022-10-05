@@ -477,7 +477,7 @@ end
 @testset "ProjectedVariance" begin
     rng = StableRNG(123)
     d, λ, n, v = 10, [4.,2.], [20,20], [1,4]
-    k, L = length(λ), (only∘unique)(length.((n,v)))
+    k, L = length(λ), length(v)
     F, Z = randn(rng,d,k), [randn(rng,k,n[l]) for l in 1:L]
     Yb = [F*Z[l] + sqrt(v[l])*randn(rng,d,n[l]) for l in 1:L]
     Mb = HePPCATModel(F, fill(sum(v)/L,L))
