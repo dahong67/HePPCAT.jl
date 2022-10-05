@@ -70,6 +70,17 @@ function updatevl(vl,U,λ,Yl,::ExpectationMaximization)
     return ρ/d
 end
 
+# Update Method: Projected Variance (with any method)
+"""
+    updatevl(vl,U,λ,Yl,method::ProjectedVariance)
+
+Update variance using `method.method` then project the variance
+so that the variance iterate does not go below `method.varfloor`.
+"""
+function updatevl(vl,U,λ,Yl,method::ProjectedVariance)
+    return max(updatevl(vl,U,λ,Yl,method.method),method.varfloor)
+end
+
 # Update method: Difference of concave approach
 """
     updatevl(vl,U,λ,Yl,::DifferenceOfConcave)

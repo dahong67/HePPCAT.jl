@@ -12,13 +12,16 @@ Estimate probabilistic PCA model for noise that is heteroscedastic across sample
 + `iters`  : number of iterations to run
 + `init`   : initial model (will be modified in-place)
 + `vknown` : variances are known (do not update) default `false`
++ `varfloor` : lower bound for variance iterates (useful if the iterates are degenerating to zero) default = 0
 Output is a [`HePPCATModel`](@ref) object.
 """
-function heppcat(Y,k,iters::Integer;init=homppca(Y,k),vknown::Bool=false)
+function heppcat(Y,k,iters::Integer;init=homppca(Y,k),vknown::Bool=false,varfloor=zero(eltype(init.v)))
     M = init
+    vmethod = iszero(varfloor) ? ExpectationMaximization() : ProjectedVariance(ExpectationMaximization(),varfloor)
+    Fmethod = ExpectationMaximization()
     for _ in 1:iters
-        vknown || updatev!(M,Y,ExpectationMaximization())
-        updateF!(M,Y,ExpectationMaximization())
+        vknown || updatev!(M,Y,vmethod)
+        updateF!(M,Y,Fmethod)
     end
     M
 end

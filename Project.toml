@@ -1,7 +1,7 @@
 name = "HePPCAT"
 uuid = "5b0c0c40-6f85-415d-b828-3ce01d5b51ec"
 authors = ["David Hong <dahong67@wharton.upenn.edu> and contributors"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 IdentityRanges = "bbac6d45-d8f3-5730-bfe4-7a449cd117ca"
