@@ -17,9 +17,11 @@ Output is a [`HePPCATModel`](@ref) object.
 """
 function heppcat(Y,k,iters::Integer;init=homppca(Y,k),vknown::Bool=false,varfloor=zero(eltype(first(Y))))
     M = init
+    vmethod = iszero(varfloor) ? ExpectationMaximization() : ProjectedVariance(ExpectationMaximization(),varfloor)
+    Fmethod = ExpectationMaximization()
     for _ in 1:iters
-        vknown || updatev!(M,Y,ProjectedVariance(ExpectationMaximization(),varfloor))
-        updateF!(M,Y,ExpectationMaximization())
+        vknown || updatev!(M,Y,vmethod)
+        updateF!(M,Y,Fmethod)
     end
     M
 end
