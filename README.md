@@ -84,7 +84,7 @@ search: heppcat HePPCAT HePPCATModel
     •    init : initial model (will be modified in-place)
 
     •    vknown : variances are known (do not update) default false
-    
+
     •    varfloor : lower bound for variance iterates (useful if the iterates are degenerating to zero) default = 0
 
   Output is a HePPCATModel object.
