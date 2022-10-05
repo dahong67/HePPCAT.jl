@@ -7,6 +7,7 @@ using HePPCAT: ExpectationMaximization, DifferenceOfConcave,
     MinorizeMaximize, ProjectedGradientAscent, RootFinding, StiefelGradientAscent,
     QuadraticSolvableMinorizer, CubicSolvableMinorizer,
     QuadraticMinorizer, OptimalQuadraticMinorizer
+using HePPCAT: ProjectedVariance
 using HePPCAT: ArmijoSearch, InverseLipschitz
 using HePPCAT: LipBoundU1, LipBoundU2, loglikelihood
 using HePPCAT: updateF!, updatev!, updateU!, updateλ!
@@ -72,6 +73,16 @@ n, v = (40, 10), (4, 1)
         end
         @test Mr !== heppcat(Yb,k,T;vknown=true)
         @test Mr == heppcat(Yb,k,T;vknown=true)
+        
+        Mr = homppca(Yb,k)
+        varfloor = sum(v)/L
+        for _ in 1:T
+            updatev!(Mr,Yb,ExpectationMaximization())
+            Mr.v .= max.(Mr.v,varfloor)
+            updateF!(Mr,Yb,ExpectationMaximization())
+        end
+        @test Mr !== heppcat(Yb,k,T;varfloor=varfloor)
+        @test Mr == heppcat(Yb,k,T;varfloor=varfloor)
     end
     
     @testset "block calls" begin
@@ -460,4 +471,41 @@ end
     H = HePPCATModel(svd(randn(rng,d,k)).U,λ,Matrix{Float64}(I,k,k),v)
     @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(0,0.15,0.5,0.005)))
     @test_logs (:warn, "Exceeded maximum line search iterations. Accuracy not guaranteed.") updateU!(deepcopy(H),Y,StiefelGradientAscent(ArmijoSearch(2,10.0,0.5,0.005)))
+end
+
+# Test ProjectedVariance
+@testset "ProjectedVariance" begin
+    rng = StableRNG(123)
+    d, λ, n, v = 10, [4.,2.], [20,20], [1,4]
+    k, L = length(λ), (only∘unique)(length.((n,v)))
+    F, Z = randn(rng,d,k), [randn(rng,k,n[l]) for l in 1:L]
+    Yb = [F*Z[l] + sqrt(v[l])*randn(rng,d,n[l]) for l in 1:L]
+    Mb = HePPCATModel(F, fill(sum(v)/L,L))
+
+    vmethods = [
+        RootFinding(),
+        ExpectationMaximization(),
+        DifferenceOfConcave(),
+        QuadraticSolvableMinorizer(),
+        CubicSolvableMinorizer(),
+    ]
+    @testset "method=$(method)" for method = vmethods
+        Mr = updatev!(deepcopy(Mb),Yb,method)
+        @test Mr.v[1] < Mr.v[2]
+
+        # Projection with varfloor < Mr.v1 < Mr.v2
+        varfloor = 0.5*Mr.v[1]
+        Mp = updatev!(deepcopy(Mb),Yb,ProjectedVariance(method,varfloor))
+        @test Mp.v == Mr.v
+
+        # Projection with Mr.v1 < varfloor < Mr.v2
+        varfloor = sum(Mr.v)/L
+        Mp = updatev!(deepcopy(Mb),Yb,ProjectedVariance(method,varfloor))
+        @test Mp.v == [varfloor, Mr.v[2]]
+
+        # Projection with Mr.v1 < Mr.v2 < varfloor
+        varfloor = 2*Mr.v[2]
+        Mp = updatev!(deepcopy(Mb),Yb,ProjectedVariance(method,varfloor))
+        @test Mp.v == [varfloor, varfloor]
+    end
 end
