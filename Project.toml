@@ -15,7 +15,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 IdentityRanges = "0.3"
-IntervalArithmetic = "0.15, 0.16, 0.17"
+IntervalArithmetic = "0.15, 0.16, 0.17, 0.20"
 IntervalRootFinding = "0.5"
 PolynomialRoots = "1.0"
 Roots = "1.0"
