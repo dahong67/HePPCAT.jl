@@ -16,6 +16,13 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Quick Start: How to use HePPCAT" => "tutorial.md",
+        "Algorithm Options" => [
+            "Update Methods" => "updates.md",
+            "Initialization" => "init.md",
+            "Known / Bounded Variances" => "vknown.md",
+        ],
+        "Docstrings" => "docstrings.md",
     ],
 )
 
