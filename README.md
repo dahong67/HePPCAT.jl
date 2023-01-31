@@ -68,24 +68,27 @@ Type `?heppcat` for the [docstring](https://docs.julialang.org/en/v1/manual/docu
 help?> heppcat
 search: heppcat HePPCAT HePPCATModel
 
-  heppcat(Y,k,iters;init=homppca(Y,k),vknown=false)
+  heppcat(Y,k,iters;init=homppca(Y,k),vknown=false,varfloor=zero(eltype(init.v)))
 
   Estimate probabilistic PCA model for noise that is heteroscedastic across samples.
 
-  Inputs
-  ≡≡≡≡≡≡≡≡
+  Required Inputs
+  ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
-    •    Y : list of matrices (each column is a sample)
+    •  Y : list of matrices (each column is a sample)
 
-    •    k : number of factors
+    •  k : number of factors
 
-    •    iters : number of iterations to run
+    •  iters : number of iterations to run
 
-    •    init : initial model (will be modified in-place)
+  Optional Keyword Arguments
+  ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
-    •    vknown : variances are known (do not update) default false
+    •  init : initial model (will be modified in-place)
 
-    •    varfloor : lower bound for variance iterates (useful if the iterates are degenerating to zero) default = 0
+    •  vknown : variances are known (do not update) default false
+
+    •  varfloor : lower bound for variance iterates (useful if the iterates are degenerating to zero) default = 0
 
   Output is a HePPCATModel object.
 ```
@@ -102,14 +105,14 @@ search: HePPCATModel
   Properties
   ≡≡≡≡≡≡≡≡≡≡≡≡
 
-    •    F  :: Matrix factor matrix (computed via F = U*sqrt(Diagonal(λ))*Vt)
+    •  F :: Matrix factor matrix (computed via F = U*sqrt(Diagonal(λ))*Vt)
 
-    •    U  :: Matrix{S} eigenvectors of factor covariance F*F'
+    •  U :: Matrix{S} eigenvectors of factor covariance F*F'
 
-    •    λ  :: Vector{T} eigenvalues of factor covariance F*F' (spike eigenvalues)
+    •  λ :: Vector{T} eigenvalues of factor covariance F*F' (spike eigenvalues)
 
-    •    Vt :: Matrix{S} (transposed) eigenvectors of F'*F (i.e., right singular vectors of F)
+    •  Vt :: Matrix{S} (transposed) eigenvectors of F'*F (i.e., right singular vectors of F)
 
-    •    v  :: Vector{T} noise variances
+    •  v :: Vector{T} noise variances
 ```
 See the `demo/` directory and the [paper code repo](https://gitlab.com/dahong/heteroscedastic-probabilistic-pca) for some examples!
