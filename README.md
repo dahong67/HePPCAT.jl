@@ -58,7 +58,7 @@ It accounts for heterogeneous quality among the samples and is generally more ro
 this package is registered and can be installed
 via the [package manager](https://docs.julialang.org/en/v1/stdlib/Pkg/).
 ```
-(@v1.8) pkg> add HePPCAT
+pkg> add HePPCAT
 ```
 
 **Main function:**
