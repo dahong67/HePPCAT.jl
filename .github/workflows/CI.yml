@@ -26,6 +26,10 @@ jobs:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
+        exclude:
+          # Julia min (1.2) has no aarch64 binaries; macOS-latest uses Apple Silicon.
+          # See: https://discourse.julialang.org/t/how-to-fix-github-actions-ci-failures-with-julia-1-6-or-1-7-on-macos-latest-and-macos-14/117019
+          - {version: 'min', os: 'macOS-latest'}
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v3
