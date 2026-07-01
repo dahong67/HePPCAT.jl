@@ -24,27 +24,27 @@ L = length(n)  # number of groups/blocks
 
 F = randn(d,k)/sqrt(d) # synthetic factor matrix
 Y = [F*randn(k,n[l]) + sqrt(v[l])*randn(d,n[l]) for l in 1:L]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2-element Vector{Matrix{Float64}}:
- [-5.769653524601496 -5.024857133561225 … 3.2524432731415365 -4.192981745635745; 5.873318528573543 -6.1794088193162455 … 4.491823521624871 -0.1335981813161213; … ; 1.8416065137827502 1.920436026882202 … -3.1200055595679963 -1.2281477397942746; -8.093079736355717 0.1189522192767589 … -4.712961762864976 2.038252855990816]
- [-0.036270680658032975 0.0008989630546115991 … 0.18293535759685456 0.0379246424957543; -0.09198882235785015 -0.06838670143308621 … -0.25283230472180396 -0.18202033027977044; … ; -0.031761507713463595 0.11885421989161249 … 0.05491334819077032 0.07413837306140354; -0.12219876573399217 0.31132741256916374 … -0.2630957278552209 -0.5176542710761547]</code></pre><p>Namely, <code>Y</code> is a list (a <code>Vector</code>) of matrices containing <code>d = 100</code> dimensional samples:</p><ul><li><code>Y[1]</code> has <code>n[1] = 800</code> samples with a noise variance of <code>v[1] = 10</code></li><li><code>Y[2]</code> has <code>n[2] = 200</code> samples with a noise variance of <code>v[2] = 0.01</code>.</li></ul><h2 id="Step-2:-Run-the-main-function-heppcat"><a class="docs-heading-anchor" href="#Step-2:-Run-the-main-function-heppcat">Step 2: Run the main function <code>heppcat</code></a><a id="Step-2:-Run-the-main-function-heppcat-1"></a><a class="docs-heading-anchor-permalink" href="#Step-2:-Run-the-main-function-heppcat" title="Permalink"></a></h2><p>With the package installed and the data <code>Y</code> prepared, simply load the package and run <code>heppcat</code>:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using HePPCAT</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; model = heppcat(Y,k,100)  # run 100 iterations</code><code class="nohighlight hljs ansi" style="display:block;">HePPCATModel{Float64, Float64}([0.026226318912307756; -0.057825093525750784; … ; -0.06683858964607761; -0.15792582984121725], [2.5653073067436436], [1.0], [10.094944286956183, 0.009950332512588143])</code></pre><p>The output is a <code>HePPCATModel</code> that contains the factor matrix and noise variance estimates. Extracting them is as simple as running:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; model.F</code><code class="nohighlight hljs ansi" style="display:block;">100×1 Matrix{Float64}:
-  0.0420055849635393
- -0.09261600483248282
-  0.042035905102727866
-  0.28701265315765245
- -0.13522199032159657
- -0.17694599021700505
- -0.12629219287853594
- -0.039857714756531194
-  0.10044284618250976
-  0.2557951583801457
+ [3.7940208231015755 2.834784983490264 … 0.8924826720291973 -0.21743074006457933; 0.4419342533141408 3.08217108876308 … 2.3175958555379736 -0.8557541182635503; … ; 1.7012582088379224 6.567218126345165 … 5.995358112024187 -2.878939069057848; 0.5863372619919877 1.9489237952789664 … -1.017854312276877 4.642709277586852]
+ [-0.0907038312700271 -0.00688253484886199 … -0.20439375120523845 0.16041460279313574; -0.10829559503570582 0.01581476701895465 … -0.123163979505523 0.09336381208441316; … ; -0.05823590324562167 -0.23670085339949054 … -0.09196276250717755 -0.0005327190357301698; 0.06857893944399088 0.038029685146168224 … 0.08807402788399389 -0.05991055073235288]</code></pre><p>Namely, <code>Y</code> is a list (a <code>Vector</code>) of matrices containing <code>d = 100</code> dimensional samples:</p><ul><li><code>Y[1]</code> has <code>n[1] = 800</code> samples with a noise variance of <code>v[1] = 10</code></li><li><code>Y[2]</code> has <code>n[2] = 200</code> samples with a noise variance of <code>v[2] = 0.01</code>.</li></ul><h2 id="Step-2:-Run-the-main-function-heppcat"><a class="docs-heading-anchor" href="#Step-2:-Run-the-main-function-heppcat">Step 2: Run the main function <code>heppcat</code></a><a id="Step-2:-Run-the-main-function-heppcat-1"></a><a class="docs-heading-anchor-permalink" href="#Step-2:-Run-the-main-function-heppcat" title="Permalink"></a></h2><p>With the package installed and the data <code>Y</code> prepared, simply load the package and run <code>heppcat</code>:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using HePPCAT</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; model = heppcat(Y,k,100)  # run 100 iterations</code><code class="nohighlight hljs ansi" style="display:block;">HePPCATModel{Float64, Float64}([-0.10487394129076288; -0.11933629497664136; … ; -0.13191552223682218; -0.0029273484039243312], [2.4811732405058993], [1.0], [9.981340208773267, 0.009876087452680456])</code></pre><p>The output is a <code>HePPCATModel</code> that contains the factor matrix and noise variance estimates. Extracting them is as simple as running:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; model.F</code><code class="nohighlight hljs ansi" style="display:block;">100×1 Matrix{Float64}:
+ -0.16519470926824945
+ -0.18797543327908356
+ -0.040328733219589276
+ -0.10237116299214163
+  0.11889224803436813
+ -0.23545385844454542
+ -0.10401576178270237
+ -0.07831733445319755
+  0.13681900448123066
+  0.23528918016879155
   ⋮
- -0.007321530454697453
- -0.10639656137802363
-  0.06993546493370875
- -0.07108020280149575
- -0.0021078169525081255
- -0.1792350191088154
-  0.11754325381238614
- -0.10705254006897151
- -0.25294311738959063</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; model.v</code><code class="nohighlight hljs ansi" style="display:block;">2-element Vector{Float64}:
- 10.094944286956183
-  0.009950332512588143</code></pre><p><strong>That&#39;s it!</strong></p><p>For more examples, see the <a href="https://gitlab.com/dahong/heteroscedastic-probabilistic-pca">paper code repo</a>!</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../updates/">Update Methods »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Tuesday 31 January 2023 22:59">Tuesday 31 January 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ -0.22317099843931898
+ -0.2704439260684859
+  0.04194832219784471
+  0.16978060039127274
+  0.019756357013536393
+  0.00991175807699728
+ -0.3220971324607059
+ -0.20778990543955567
+ -0.004611083197230302</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; model.v</code><code class="nohighlight hljs ansi" style="display:block;">2-element Vector{Float64}:
+ 9.981340208773267
+ 0.009876087452680456</code></pre><p><strong>That&#39;s it!</strong></p><p>For more examples, see the <a href="https://gitlab.com/dahong/heteroscedastic-probabilistic-pca">paper code repo</a>!</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../updates/">Update Methods »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 1 July 2026 12:41">Wednesday 1 July 2026</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
